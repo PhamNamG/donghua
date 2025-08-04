@@ -538,13 +538,15 @@ export function WatchClient({ anime }: { anime: Anime }) {
                     <Badge variant="secondary" key={tag._id}>{tag.name}</Badge>
                   ))
                 }
-                <Badge
-                  variant="outline"
-                  className="text-yellow-600 bg-yellow-50"
-                >
-                  {anime.copyright}
-                </Badge>
-
+                {
+                  anime.copyright && anime.copyright !== 'false' &&
+                  <Badge
+                    variant="outline"
+                    className="text-yellow-600 bg-yellow-50"
+                  >
+                    {anime.copyright}
+                  </Badge>
+                }
                 {/* Status Badge với Animation */}
                 {anime.category.status === 'pending' ? (
                   <Badge
