@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../../constant/api.constant';
 export interface AnimeProduct {
     _id: string;
     seri: string;
+    slug:string
 }
 
 export interface Anime {
@@ -34,6 +35,9 @@ export interface Anime {
     createdAt: string;
     updatedAt: string;
     latestProductUploadDate: string;
+    tags:{
+        name:string,
+    }[]
 }
 
 export interface AnimeResponse {

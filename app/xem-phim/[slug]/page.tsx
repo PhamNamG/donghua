@@ -3,6 +3,8 @@ import { Metadata } from "next"
 import { WatchClient } from "./watch-client"
 import { getAnimeEpisode } from "@/services/anime.server"
 import { ANIME_PATHS } from "@/constant/path.constant";
+import { safeSubstring } from "@/lib/data-utils";
+import { WatchSEOOptimizer } from "@/components/watch-seo-optimizer";
 
 type tParams = Promise<{ slug: string }>;
 
@@ -19,43 +21,62 @@ export async function generateMetadata(
     }
   }
 
-  const title = `${animeData.category.isMovie === 'drama' ? animeData.name + ' - Tập ' + animeData.seri : animeData.name}`
-  const titleOg = `${animeData.category.isMovie === 'drama' ? animeData.name + ' Tập ' + animeData.seri : animeData.name}`
-  const description = animeData.category.des
+  // Tối ưu title để unique hơn
+  const title = animeData.category.isMovie === 'drama' 
+    ? `${animeData.name} - Tập ${animeData.seri} | Hoạt hình trung quốc`
+    : `${animeData.name} | Hoạt hình trung quốc`
+  
+  const titleOg = animeData.category.isMovie === 'drama' 
+    ? `${animeData.name} Tập ${animeData.seri}`
+    : animeData.name
+  
+  // Tối ưu description để unique hơn
+  const description = animeData.category.isMovie === 'drama'
+    ? `${animeData.name} - Tập ${animeData.seri} - ${animeData.category.year} - ${animeData.category.time}/tập - ${animeData.category.lang} - ${animeData.category.quality}. ${safeSubstring(animeData.category.des, 150)}`
+    : `${animeData.name} - ${animeData.category.year} - ${animeData.category.time} - ${animeData.category.lang} - ${animeData.category.quality}. ${safeSubstring(animeData.category.des, 150)}`
+
+  // Tối ưu keywords để unique hơn
   const keywords = [
-    titleOg,
-    `${titleOg} Vietsub`,
-    `${titleOg} Lồng Tiếng`,
-    `${titleOg} Thuyết Minh`,
-    `${titleOg} phimmoi`,
-    `${titleOg} full`,
+    `${titleOg} xem online`,
+    `${titleOg} vietsub`,
+    `${titleOg} thuyết minh`,
+    `${titleOg} ${animeData.category.year}`,
+    `${titleOg} ${animeData.category.quality}`,
+    `${titleOg} hhpanda`,
     `${titleOg} hhninja`,
     `${titleOg} hhkungfu`,
-    `${titleOg} hhpanda`,
     `${titleOg} tvhay`,
     `${titleOg} animehay`,
-    `${titleOg} hh3d`,
-    `${titleOg} hoathinh3d`,
-    `${titleOg} hh3dtq`
+    `${titleOg} phimmoi`,
+    `${titleOg} youtube`,
+    `${titleOg} full`,
+    ...(animeData.category.tags?.map((tag: { name: string }) => `${tag.name} anime`) || []),
+    "hoạt hình trung quốc online",
+    "anime vietsub",
+    "phim hoạt hình mới"
   ];
+
   return {
     title,
     description,
     keywords,
-     robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    robots: {
       index: true,
       follow: true,
-      'max-image-preview': 'large',
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
     openGraph: {
       title,
       description,
-      type: 'website',
-      siteName: 'Hoạt hình trung quốc Website',
+      type: 'video.movie',
+      siteName: 'Hoạt hình trung quốc',
+      url: `https://hh3dtq.site/xem-phim/${slug}`,
+      locale: "vi_VN",
       images: [{
         url: animeData.category.linkImg || '/og-image.jpg',
         width: 1200,
@@ -67,10 +88,16 @@ export async function generateMetadata(
       card: 'summary_large_image',
       title,
       description,
-      images: [animeData.category.linkImg || '/og-image.jpg']
+      images: [animeData.category.linkImg || '/og-image.jpg'],
+      site: "https://hh3dtq.site",
+      creator: "https://hh3dtq.site",
     },
     alternates: {
-      canonical: `${ANIME_PATHS.WATCH}/${slug}`
+      canonical: `https://hh3dtq.site${ANIME_PATHS.WATCH}/${slug}`
+    },
+    other: {
+      'article:author': 'Hoạt hình trung quốc',
+      'article:section': animeData.category.tags?.[0]?.name || 'Anime',
     }
   }
 }
@@ -83,8 +110,11 @@ export default async function WatchPage({ params }: { params: tParams }) {
     notFound()
   }
   return (
-    <WatchClient
-      anime={animeData}
-    />
+    <>
+      <WatchClient
+        anime={animeData}
+      />
+      <WatchSEOOptimizer anime={animeData} />
+    </>
   )
 }

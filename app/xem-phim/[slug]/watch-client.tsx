@@ -69,8 +69,6 @@ interface Category {
   tags: Tag[];
 }
 
-
-
 interface Anime {
   name: string;
   slug: string;
@@ -133,7 +131,6 @@ const ZaloButton = ({
   );
 };
 
-
 export function WatchClient({ anime }: { anime: Anime }) {
   const [comment, setComment] = useState("");
   const addToHistory = useHistoryStore((state) => state.addToHistory);
@@ -142,6 +139,8 @@ export function WatchClient({ anime }: { anime: Anime }) {
   const currentEpisodeRef = useRef<HTMLDivElement>(null);
   const currentMobileEpisodeRef = useRef<HTMLDivElement>(null);
   const [combiningEpisodes, setCombiningEpisodes] = useState<CombiningEpisode | null>(null);
+  
+  
   // Thêm useEffect để cập nhật lịch sử xem
   useEffect(() => {
     addToHistory({
@@ -185,8 +184,6 @@ export function WatchClient({ anime }: { anime: Anime }) {
         behavior: 'smooth'
       });
     }
-
-
   }, [anime.seri]);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -199,8 +196,8 @@ export function WatchClient({ anime }: { anime: Anime }) {
   };
 
   const currentEpisode = anime.category.products[0];
-
   const zaloLink = anime.zaloGroupLink || SOCIAL_LINKS.ZALO;
+  
   return (
     <div className="min-h-screen bg-background">
       <Wrapper>
@@ -677,11 +674,6 @@ export function WatchClient({ anime }: { anime: Anime }) {
             </Tabs>
           </div>
         </div>
-
-        {/* Floating Zalo Button - Always visible */}
-        {/* <ZaloButton href={zaloLink} variant="floating" showIcon={false}>
-          <img src="/7044033_zalo_icon.svg" alt="Zalo" className="w-6 h-6" />
-        </ZaloButton> */}
       </Wrapper>
     </div>
   );

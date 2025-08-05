@@ -4,12 +4,16 @@ import {
   ArrowLeft,
   Star,
   Calendar,
-  Clock,
-  Film,
-  Globe,
-  BarChart4,
   ChevronUp,
   ChevronDown,
+  Tag,
+  CalendarDays,
+  Clock3,
+  Languages,
+  Monitor,
+  Play,
+  Plus,
+  Bookmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,69 +31,68 @@ import MVLink from "@/components/Link";
 import { ANIME_PATHS } from "@/constant/path.constant";
 import { SOCIAL_LINKS } from "@/constant/social.constant";
 import { useWatchlistStore } from "@/store/watchlist";
+import { FormattedAnimeData } from "@/lib/data-utils";
 
-interface AnimeProduct {
+export interface AnimeProduct {
   _id: string;
   seri: string;
   isApproved: boolean;
   slug: string;
 }
 
-interface Rating {
-  user: string;
-  score: number;
-  date: string;
-}
+// interface Rating {
+//   user: string;
+//   score: number;
+//   date: string;
+// }
 
-interface Comment {
-  user: string;
-  content: string;
-  rating: number;
-  date: string;
-}
+// interface Comment {
+//   user: string;
+//   content: string;
+//   rating: number;
+//   date: string;
+// }
 
-interface Anime {
-  _id: string;
-  name: string;
-  tags?: [
-    {
-      name: string;
-      slug: string;
-    }
-  ];
-  anotherName: string;
-  slug: string;
-  linkImg: string;
-  des: string;
-  sumSeri: string;
-  products: AnimeProduct[];
-  type: string;
-  week: {
-    name: string;
-  };
-  up: number;
-  year: string;
-  time: string;
-  isActive: number;
-  rating: Rating[];
-  ratingCount: number;
-  hour: string;
-  season: string;
-  lang: string;
-  quality: string;
-  comment: Comment[];
-  upcomingReleases: string;
-  isMovie: string;
-  searchCount: number;
-  createdAt: string;
-  updatedAt: string;
-  latestProductUploadDate: string;
-  relatedSeasons: string;
-  zaloGroupLink?: string;
-}
+// interface Anime {
+//   _id: string;
+//   name: string;
+//   tags?: Array<{
+//     name: string;
+//     slug: string;
+//   }>;
+//   anotherName: string;
+//   slug: string;
+//   linkImg: string;
+//   des: string;
+//   sumSeri: string;
+//   products: AnimeProduct[];
+//   type: string;
+//   week: {
+//     name: string;
+//   };
+//   up: number;
+//   year: string;
+//   time: string;
+//   isActive: number;
+//   rating: Rating[];
+//   ratingCount: number;
+//   hour: string;
+//   season: string;
+//   lang: string;
+//   quality: string;
+//   comment: Comment[];
+//   upcomingReleases: string;
+//   isMovie: string;
+//   searchCount: number;
+//   createdAt: string;
+//   updatedAt: string;
+//   latestProductUploadDate: string;
+//   relatedSeasons: string;
+//   zaloGroupLink?: string;
+// }
 
 interface AnimeClientProps {
-  anime: Anime;
+  anime: FormattedAnimeData;
 }
 
 export function AnimeClient({ anime }: AnimeClientProps) {
@@ -110,6 +113,17 @@ export function AnimeClient({ anime }: AnimeClientProps) {
       });
     }
   };
+
+  // Tối ưu hóa thông tin hiển thị để tránh trùng lặp
+  const displayInfo = [
+    { icon: Star, label: `${anime.up} lượt thích`, value: null, className: "text-yellow-500" },
+    { icon: CalendarDays, label: anime.year, value: null },
+    { icon: Clock3, label: `${anime.time}/tập`, value: null },
+    ...(anime.isMovie === "drama" ? [{ icon: Play, label: `${anime.sumSeri} tập`, value: null }] : []),
+    { icon: Languages, label: anime.lang === "ThuyetMinh-Vietsub" ? "Thuyết minh + Vietsub" : anime.lang === "ThuyetMinh" ? "Thuyết minh" : "Vietsub", value: null },
+    { icon: Monitor, label: anime.quality, value: null }
+  ];
+
   return (
     <>
       {/* Header with background image - Full width */}
@@ -117,7 +131,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
         <div className="absolute inset-0">
           <MVImage
             src={anime.linkImg}
-            alt={anime.name}
+            alt={`${anime.name} - ${anime.anotherName} - Phim hoạt hình trung quốc`}
             fill
             className="object-cover brightness-[0.4] w-full h-full"
             priority
@@ -139,11 +153,12 @@ export function AnimeClient({ anime }: AnimeClientProps) {
           <div className="flex flex-col md:flex-row gap-6 items-start mt-auto md:mt-0">
             <div className="relative h-[200px] w-[140px] md:h-[240px] md:w-[160px] rounded-lg overflow-hidden shadow-lg mx-auto md:mx-0">
               <MVImage
-                src={anime.linkImg || "/placeholder.svg"}
-                alt={anime.name}
+                src={anime.linkImg}
+                alt={`Poster ${anime.name} - ${anime.anotherName}`}
                 fill
-                className="object-cover"
+                className="object-cover w-full h-full"
                 priority
+                sizes="(max-width: 768px) 100vw, 1200px"
               />
             </div>
             <div className="flex-1 text-center md:text-left">
@@ -161,38 +176,12 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                 {anime.anotherName}
               </p>
               <div className="flex flex-wrap gap-4 text-sm mb-4 justify-center md:justify-start">
-                <div className="flex items-center gap-1 text-white/90">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  <span>{anime.up} lượt thích</span>
-                </div>
-                <div className="flex items-center gap-1 text-white/90">
-                  <Calendar className="h-4 w-4" />
-                  <span>{anime.year}</span>
-                </div>
-                <div className="flex items-center gap-1 text-white/90">
-                  <Clock className="h-4 w-4" />
-                  <span>{anime.time}/tập</span>
-                </div>
-                {anime.isMovie === "drama" && (
-                  <div className="flex items-center gap-1 text-white/90">
-                    <Film className="h-4 w-4" />
-                    <span>{anime.sumSeri} tập</span>
+                {displayInfo.map((item, index) => (
+                  <div key={index} className="flex items-center gap-1 text-white/90">
+                    <item.icon className={`h-4 w-4 ${item.className}`} />
+                    <span>{item.label}</span>
                   </div>
-                )}
-                <div className="flex items-center gap-1 text-white/90">
-                  <Globe className="h-4 w-4" />
-                  <span>
-                    {anime.lang === "ThuyetMinh-Vietsub"
-                      ? "Thuyết minh + Vietsub"
-                      : anime.lang === "ThuyetMinh"
-                      ? "Thuyết minh"
-                      : "Vietsub"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-white/90">
-                  <BarChart4 className="h-4 w-4" />
-                  <span>{anime.quality}</span>
-                </div>
+                ))}
               </div>
               {/* 3 buttons in one row on all screen sizes */}
               <div className="flex flex-row gap-2 md:gap-3 md:justify-start justify-center w-full px-2 md:px-0">
@@ -204,11 +193,13 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                     <MVLink
                       href={`${ANIME_PATHS.WATCH}/${anime?.products[0]?.slug}`}
                     >
+                      <Play className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Xem ngay</span>
                       <span className="sm:hidden">Xem</span>
                     </MVLink>
                   ) : (
                     <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}>
+                      <Play className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Xem ngay</span>
                       <span className="sm:hidden">Xem</span>
                     </MVLink>
@@ -219,6 +210,11 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                   onClick={handleWatchlistClick}
                   className="flex-1 md:flex-none text-xs md:text-sm px-2 md:px-4"
                 >
+                  {isInList ? (
+                    <Bookmark className="h-4 w-4 mr-1" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-1" />
+                  )}
                   <span className="hidden sm:inline">
                     {isInList ? "Xóa khỏi danh sách" : "Thêm vào danh sách"}
                   </span>
@@ -284,34 +280,67 @@ export function AnimeClient({ anime }: AnimeClientProps) {
             <div>
               <h2 className="text-xl font-semibold mb-3">Thông tin chi tiết</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-medium">Thể loại</h3>
-                  <p className="text-muted-foreground">
-                    {anime.tags?.map((item) => item.name).join(", ")}
-                  </p>
+                <div className="flex gap-3 items-center">
+                  <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">Thể loại</h3>
+                    <p className="text-muted-foreground">
+                      {anime.tags?.map((item) => item.name).join(", ")}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Năm phát hành</h3>
-                  <p className="text-muted-foreground">{anime.year}</p>
+                <div className="flex gap-3 items-center">
+                  <CalendarDays className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">Năm phát hành</h3>
+                    <p className="text-muted-foreground">{anime.year}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Lịch chiếu</h3>
-                  <p className="text-muted-foreground">
-                    {anime.week?.name} hàng tuần, {anime.hour}
-                  </p>
+                {anime.week?.name && (
+                  <div className="flex gap-3 items-center">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <h3 className="font-medium">Lịch chiếu</h3>
+                      <p className="text-muted-foreground">
+                        {anime.week.name} hàng tuần, {anime.hour}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-3 items-center">
+                  <Clock3 className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">Thời lượng</h3>
+                    <p className="text-muted-foreground">{anime.time}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Thời lượng</h3>
-                  <p className="text-muted-foreground">{anime.time}</p>
+                <div className="flex gap-3 items-center">
+                  <Languages className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">Ngôn ngữ</h3>
+                    <p className="text-muted-foreground">
+                      {anime.lang === "ThuyetMinh-Vietsub" ? "Thuyết minh + Vietsub" : 
+                       anime.lang === "ThuyetMinh" ? "Thuyết minh" : "Vietsub"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Ngôn ngữ</h3>
-                  <p className="text-muted-foreground">{anime.lang}</p>
+                <div className="flex gap-2 items-center">
+                  <Monitor className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">Chất lượng</h3>
+                    <p className="text-muted-foreground">{anime.quality}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium">Chất lượng</h3>
-                  <p className="text-muted-foreground">{anime.quality}</p>
-                </div>
+                {anime.isMovie === "drama" && (
+                  <div className="flex gap-2 items-center">
+                    <Play className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <h3 className="font-medium">Số tập</h3>
+                      <p className="text-muted-foreground">{anime.sumSeri} tập</p>
+                    </div>
+                  </div>
+                )}
+               
               </div>
             </div>
           </TabsContent>
@@ -382,7 +411,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
               </div>
 
               <div className="space-y-6">
-                {anime.comment && anime.comment.length > 0 ? (
+                {/* {anime.comment && anime.comment.length > 0 ? (
                   anime.comment.map((comment, i) => (
                     <div key={i} className="p-4 rounded-lg border">
                       <div className="flex justify-between mb-2">
@@ -400,11 +429,11 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                       </div>
                     </div>
                   ))
-                ) : (
+                ) : ( */}
                   <div className="text-center text-muted-foreground py-8">
                     Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
                   </div>
-                )}
+                {/* )} */}
               </div>
             </div>
           </TabsContent>
