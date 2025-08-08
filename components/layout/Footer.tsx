@@ -1,18 +1,14 @@
-import { Facebook, Send, Music, MessageCircle } from 'lucide-react';
+import { Facebook, Send } from 'lucide-react';
 import MVLink from '../Link';
 
 export const socialLinks = {
   facebook: 'https://www.facebook.com/phanhhh3d',
-  tiktok: 'https://www.tiktok.com/@tieu_loli',
   telegram: 'https://t.me/myang_03',
-  zalo: 'https://zalo.me/g/kxbtdy548'
 } as const;
 
 const socialIcons = {
   facebook: Facebook,
-  tiktok: Music,
   telegram: Send,
-  zalo: MessageCircle
 } as const;
 
 
@@ -23,6 +19,7 @@ export default function Footer() {
           <div className="flex items-center justify-between gap-4 px-10">
             <p>© {new Date().getFullYear()} HH3D. All rights reserved.</p>
             <div className="flex items-center gap-3">
+              Liên hệ quảng cáo qua 
               {Object.entries(socialLinks).map(([key, url]) => {
                 const Icon = socialIcons[key as keyof typeof socialIcons];
                 return (

@@ -3,6 +3,7 @@ import { Suspense, lazy, useState, useEffect, useRef, RefObject } from 'react'
 import { FeaturedSlider } from "@/components/featured-slider"
 import { Wrapper } from "@/components/wrapper"
 import { WeeklySchedulePreview } from '@/components/weekly-schedule';
+import { SmartAdBanner } from '@/components/ad-banner';
 
 interface LazySectionProps {
   children: React.ReactNode;
@@ -83,10 +84,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <Wrapper>
         {/* <div className="border-b bg-muted/30">
-        <div className="container py-3 flex justify-center">
-          <AdBanner position="header" size="banner" priority="high" />
-        </div>
-      </div> */}
+          <div className="container py-3 flex justify-center">
+            <SmartAdBanner position='header' size="banner" closeable />
+          </div>
+        </div> */}
         <section className="mb-12">
           <FeaturedSlider />
         </section>
@@ -120,11 +121,11 @@ export default function HomePage() {
           <Categories />
         </LazySection>
 
-        {/* <div className="border-t bg-muted/30">
+        <div className="border-t bg-muted/30">
           <div className="container py-3 flex justify-center fixed bottom-0">
-            <BottomBanner />
+            <SmartAdBanner position='bottom' size="banner" closeable />
           </div>
-        </div> */}
+        </div>
       </Wrapper>
     </div>
   )
