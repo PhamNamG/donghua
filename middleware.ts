@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
         return new NextResponse(
           JSON.stringify({
             error: 'Rate limit exceeded',
-            message: 'Spam con cặc! Vui lòng đợi 15 phút trước khi gửi thêm request.'
+            message: 'Spam con cặc! Mày bị ban'
           }),
           {
             status: 429,
