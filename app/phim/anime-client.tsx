@@ -198,7 +198,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                       <span className="sm:hidden">Xem</span>
                     </MVLink>
                   ) : (
-                    <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}>
+                    <MVLink href={`${ANIME_PATHS.WATCH}/${anime?.products[0]?.slug}`}>
                       <Play className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Xem ngay</span>
                       <span className="sm:hidden">Xem</span>
