@@ -3,7 +3,7 @@ import { Suspense, lazy, useState, useEffect, useRef, RefObject } from 'react'
 import { FeaturedSlider } from "@/components/featured-slider"
 import { Wrapper } from "@/components/wrapper"
 import { WeeklySchedulePreview } from '@/components/weekly-schedule';
-
+export const runtime = 'edge';
 interface LazySectionProps {
   children: React.ReactNode;
   fallback: React.ReactNode;
