@@ -6,6 +6,8 @@ import { ANIME_PATHS } from "@/constant/path.constant";
 import { safeSubstring } from "@/lib/data-utils";
 import { WatchSEOOptimizer } from "@/components/watch-seo-optimizer";
 
+export const runtime = 'edge';
+
 type tParams = Promise<{ slug: string }>;
 
 export async function generateMetadata(
