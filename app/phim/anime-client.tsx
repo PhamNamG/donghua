@@ -32,6 +32,7 @@ import { ANIME_PATHS } from "@/constant/path.constant";
 import { SOCIAL_LINKS } from "@/constant/social.constant";
 import { useWatchlistStore } from "@/store/watchlist";
 import { FormattedAnimeData } from "@/lib/data-utils";
+import Gallery from "./gallery";
 
 export interface AnimeProduct {
   _id: string;
@@ -40,63 +41,13 @@ export interface AnimeProduct {
   slug: string;
 }
 
-// interface Rating {
-//   user: string;
-//   score: number;
-//   date: string;
-// }
-
-// interface Comment {
-//   user: string;
-//   content: string;
-//   rating: number;
-//   date: string;
-// }
-
-// interface Anime {
-//   _id: string;
-//   name: string;
-//   tags?: Array<{
-//     name: string;
-//     slug: string;
-//   }>;
-//   anotherName: string;
-//   slug: string;
-//   linkImg: string;
-//   des: string;
-//   sumSeri: string;
-//   products: AnimeProduct[];
-//   type: string;
-//   week: {
-//     name: string;
-//   };
-//   up: number;
-//   year: string;
-//   time: string;
-//   isActive: number;
-//   rating: Rating[];
-//   ratingCount: number;
-//   hour: string;
-//   season: string;
-//   lang: string;
-//   quality: string;
-//   comment: Comment[];
-//   upcomingReleases: string;
-//   isMovie: string;
-//   searchCount: number;
-//   createdAt: string;
-//   updatedAt: string;
-//   latestProductUploadDate: string;
-//   relatedSeasons: string;
-//   zaloGroupLink?: string;
-// }
 
 interface AnimeClientProps {
   anime: FormattedAnimeData;
 }
 
 export function AnimeClient({ anime }: AnimeClientProps) {
-  const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore();
   const isInList = isInWatchlist(anime._id);
 
@@ -123,17 +74,16 @@ export function AnimeClient({ anime }: AnimeClientProps) {
     { icon: Languages, label: anime.lang === "ThuyetMinh-Vietsub" ? "Thuyết minh + Vietsub" : anime.lang === "ThuyetMinh" ? "Thuyết minh" : "Vietsub", value: null },
     { icon: Monitor, label: anime.quality, value: null }
   ];
-
   return (
     <>
       {/* Header with background image - Full width */}
       <div className="relative h-[500px] md:h-[400px] w-full overflow-hidden">
         <div className="absolute inset-0">
           <MVImage
-            src={anime.linkImg}
+            src={anime.posters[0]?.imageUrl ? anime.posters[0]?.imageUrl : anime.linkImg}
             alt={`${anime.name} - ${anime.anotherName} - Phim hoạt hình trung quốc`}
             fill
-            className="object-cover brightness-[0.4] w-full h-full"
+            className="object-cover object-center brightness-[0.5] w-full h-full "
             priority
           />
         </div>
@@ -251,6 +201,10 @@ export function AnimeClient({ anime }: AnimeClientProps) {
       </div>
 
       <Wrapper>
+        <Gallery
+          images={anime.posters}
+          className="mb-6"
+        />
         <Tabs defaultValue="info" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="info">Thông tin</TabsTrigger>

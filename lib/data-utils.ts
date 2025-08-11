@@ -39,6 +39,9 @@ export interface FormattedAnimeData {
     relatedSeasons: string;
     tags: AnimeTag[];
     zaloGroupLink: string;
+    posters: {
+        imageUrl: string;
+    }[];
 }
 
 export function safeString(value: string) {
@@ -104,6 +107,7 @@ export function formatAnimeData(anime: FormattedAnimeData) {
         relatedSeasons: safeString(anime.relatedSeasons),
         tags: safeTags(anime.tags),
         zaloGroupLink: safeString(anime.zaloGroupLink),
+        posters: safeArray(anime.posters),
     };
 }
 
