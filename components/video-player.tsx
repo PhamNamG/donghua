@@ -107,7 +107,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             setIsLoading(false)
             return true
           }
-          console.log("CryptoJS temporarily disabled for Edge Runtime compatibility")
         } catch (error) {
           console.error("Error decoding Dailymotion server:", error)
         }
