@@ -8,7 +8,7 @@ import { ANIME_PATHS } from "@/constant/path.constant";
 import { SEOOptimizer } from "@/components/seo-optimizer";
 import { formatAnimeData, validateAnimeData, safeSubstring, FormattedAnimeData } from "@/lib/data-utils";
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 type tParams = Promise<{ slug: string }>;
 

@@ -1,6 +1,6 @@
 import { CategoryGrid } from "@/app/categories/_components/CategoryGrid"
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 interface CategoryPageProps {
   params: Promise<{
