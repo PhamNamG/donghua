@@ -99,14 +99,14 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     const tryDailyMotion = (): boolean => {
       if (anime.dailyMotionServer) {
         try {
-          // const secretKey = process.env.NEXT_PUBLIC_SECERT_CRYPTO_KEY_PRODUCTS_DAILYMOTION_SERVER || ""
-          // const decodedData = CryptoJS.AES.decrypt(anime.dailyMotionServer, secretKey).toString(CryptoJS.enc.Utf8)
+          const secretKey = process.env.NEXT_PUBLIC_SECERT_CRYPTO_KEY_PRODUCTS_DAILYMOTION_SERVER || ""
+          const decodedData = CryptoJS.AES.decrypt(anime.dailyMotionServer, secretKey).toString(CryptoJS.enc.Utf8)
           
-          // if (decodedData && isValidUrl(decodedData)) {
-          //   setVideoSource(addAdBlockParams(decodedData))
-          //   setIsLoading(false)
-          //   return true
-          // }
+          if (decodedData && isValidUrl(decodedData)) {
+             setVideoSource(addAdBlockParams(decodedData))
+             setIsLoading(false)
+             return true
+           }
           console.log("CryptoJS temporarily disabled for Edge Runtime compatibility")
         } catch (error) {
           console.error("Error decoding Dailymotion server:", error)
