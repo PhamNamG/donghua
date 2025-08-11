@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx @cloudflare/next-on-pages",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "wrangler deploy",
+    "page:build":"npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "@next/third-parties": "^15.3.5",

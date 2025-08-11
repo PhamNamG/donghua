@@ -1,0 +1,6 @@
+name = "donghua"
+main = ".vercel/output/static/_worker.js"
+compatibility_date = "2025-08-11"
+
+[site]
+bucket = ".vercel/output/static"
