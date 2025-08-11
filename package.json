@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "wrangler deploy",
-    "page:build":"npx @cloudflare/next-on-pages"
+    "deploy": "npm run page:build && wrangler deploy",
+    "page:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "@next/third-parties": "^15.3.5",

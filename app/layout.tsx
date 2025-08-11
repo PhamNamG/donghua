@@ -10,7 +10,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hh3dtq.site'),
   title: {
     default: "Hoạt hình trung quốc - Xem phim hoạt hình trung quốc mới nhất",
     template: "%s | Hoạt hình trung quốc",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "vi_VN",
-    url: `${process.env.NEXT_PUBLIC_SITE_URL}`,
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://hh3dtq.site',
     siteName: "Hoạt hình trung quốc",
     title: "Hoạt hình trung quốc - Xem phim hoạt hình trung quốc mới nhất",
     description:
@@ -68,10 +68,10 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: `${process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}`,
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
   },
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}`,
+    canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://hh3dtq.site',
   },
 };
 
