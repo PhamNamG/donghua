@@ -5,7 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { SeriesProvider } from "@/contexts/SeriesContext";
 import { Metadata } from "next";
-// import { GoogleAnalytics } from "@next/third-parties/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 export const runtime = 'edge';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -91,7 +91,7 @@ export default function RootLayout({
             <Footer />
           </SeriesProvider>
         </Providers>
-        {/* <GoogleAnalytics gaId={`${process.env.NEXT_PUBLIC_G_ID}`} /> */}
+        <GoogleAnalytics gaId={`${process.env.NEXT_PUBLIC_G_ID}`} />
       </body>
     </html>
   );
