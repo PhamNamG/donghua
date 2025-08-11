@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { SeriesProvider } from "@/contexts/SeriesContext";
 import { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
+export const runtime = 'edge';
 
 const inter = Inter({ subsets: ["latin"] });
 
