@@ -3,8 +3,8 @@ import type { NextRequest } from 'next/server'
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 
-const RATE_LIMIT_MAX = 300
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000 
+const RATE_LIMIT_MAX = 70
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000 
 
 export function middleware(request: NextRequest) {
   const { pathname, origin } = request.nextUrl
