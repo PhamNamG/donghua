@@ -6,11 +6,9 @@ import {
   Calendar,
   ChevronUp,
   ChevronDown,
-  Tag,
   CalendarDays,
   Clock3,
   Languages,
-  Monitor,
   Play,
   Plus,
   Bookmark,
@@ -18,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wrapper } from "@/components/wrapper";
 import MVImage from "@/components/ui/image";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import {
   Collapsible,
@@ -47,7 +45,8 @@ interface AnimeClientProps {
 }
 
 export function AnimeClient({ anime }: AnimeClientProps) {
-  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
+  const [isCompactEpisodes, setIsCompactEpisodes] = useState(true);
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore();
   const isInList = isInWatchlist(anime._id);
 
@@ -72,8 +71,24 @@ export function AnimeClient({ anime }: AnimeClientProps) {
     { icon: Clock3, label: `${anime.time}/tập`, value: null },
     ...(anime.isMovie === "drama" ? [{ icon: Play, label: `${anime.sumSeri} tập`, value: null }] : []),
     { icon: Languages, label: anime.lang === "ThuyetMinh-Vietsub" ? "Thuyết minh + Vietsub" : anime.lang === "ThuyetMinh" ? "Thuyết minh" : "Vietsub", value: null },
-    { icon: Monitor, label: anime.quality, value: null }
   ];
+
+  // Derive robust airing/completed flags
+  const totalEpisodes = Number(anime.sumSeri) || 0;
+  const currentEpisodes = Array.isArray(anime.products) ? anime.products.length : 0;
+  const statusLower = (anime.status || "").toLowerCase();
+  const isCompleted =
+    statusLower === "completed" ||
+    statusLower === "complete" ||
+    (totalEpisodes > 0 && currentEpisodes >= totalEpisodes);
+  const isAiring = !isCompleted && (
+    statusLower === "pending" ||
+    statusLower === "airing" ||
+    statusLower === "ongoing" ||
+    totalEpisodes === 0 ||
+    currentEpisodes < totalEpisodes
+  );
+
   return (
     <>
       {/* Header with background image - Full width */}
@@ -119,12 +134,19 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                   </Badge>
                 ))}
               </div>
-              <h1 className="text-2xl md:text-4xl font-bold mb-2 text-white line-clamp-2">
-                {anime.name}
+              <h1 className="text-lg font-bold mb-2 text-white text-center md:hidden">
+                {anime.name} <span className="text-white/70 font-normal">- {anime.anotherName}</span>
               </h1>
-              <p className="text-sm md:text-base text-white/80 mb-4 line-clamp-2">
-                {anime.anotherName}
-              </p>
+
+              <div className="hidden md:block mb-4">
+                <h1 className="text-4xl font-bold text-white line-clamp-2">
+                  {anime.name}
+                </h1>
+                <p className="text-base text-white/80 line-clamp-2">
+                  {anime.anotherName}
+                </p>
+              </div>
+
               <div className="flex flex-wrap gap-4 text-sm mb-4 justify-center md:justify-start">
                 {displayInfo.map((item, index) => (
                   <div key={index} className="flex items-center gap-1 text-white/90">
@@ -133,6 +155,34 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                   </div>
                 ))}
               </div>
+              {isAiring ? (
+                <div className="mb-4 justify-center md:justify-start">
+                  <div className="relative group inline-flex">
+                    {/* Glow effect */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    {/* Main container */}
+                    <div className="relative bg-gradient-to-br from-white/90 to-white/70 dark:from-white/10 dark:to-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-white/20 rounded-xl px-4 py-2 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                      <span className="text-sm font-semibold text-gray-800 dark:text-white">
+                        {anime.week.name}, {anime.hour}
+                      </span>
+                      <div className="ml-2 w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ) : isCompleted ? (
+                <div className="mb-4 justify-center md:justify-start">
+                  <div className="relative bg-white/5 dark:bg-white/5 border border-white/70 rounded-lg px-3 py-2 inline-flex items-center gap-2">
+                    <span className="text-sm font-medium text-white">
+                      Hoàn Thành
+                    </span>
+                    <span className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  </div>
+                </div>
+              ) : null
+              }
+
+
               {/* 3 buttons in one row on all screen sizes */}
               <div className="flex flex-row gap-2 md:gap-3 md:justify-start justify-center w-full px-2 md:px-0">
                 <Button
@@ -196,202 +246,174 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                 </Button>
               </div>
             </div>
+            <div>
+
+            </div>
           </div>
         </div>
       </div>
 
       <Wrapper>
+
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-semibold">Danh sách tập</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Rút gọn</span>
+              <Switch
+                checked={isCompactEpisodes}
+                onCheckedChange={setIsCompactEpisodes}
+                className="data-[state=checked]:bg-[#FFD875]"
+              />
+            </div>
+          </div>
+
+          {isCompactEpisodes ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 max-h-[300px] overflow-y-auto pr-2">
+              {anime.products && anime.products.length > 0
+                ? anime.products.map((product, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
+                        {anime.isMovie === "drama" ? product.seri : "Full"}
+                      </div>
+                      <div>
+                        {anime.isMovie !== "drama" ? (
+                          <h3 className="font-medium">Full</h3>
+                        ) : (
+                          <h3 className="font-medium">
+                            Tập {product.seri}
+                          </h3>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          Đã phát hành
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      asChild
+                      disabled={!product.isApproved}
+                    >
+                      {anime.isMovie === "drama" ? (
+                        <MVLink
+                          href={`${ANIME_PATHS.WATCH}/${product.slug}`}
+                        >
+                          <Play className="w-4 h-4 lg:block hidden" />
+                          <span className="lg:hidden">Xem</span>
+                        </MVLink>
+                      ) : (
+                        <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}>
+                          <Play className="w-4 h-4 lg:block hidden" />
+                          <span className="lg:hidden">Xem</span>
+                        </MVLink>
+                      )}
+                    </Button>
+                  </div>
+                ))
+                : null}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-7 gap-4 pr-1 max-h-[300px] overflow-y-auto">
+            {anime.products && anime.products.length > 0
+              ? anime.products.map((product, index) => (
+                <MVLink
+                  key={index}
+                  href={anime.isMovie === "drama" ? `${ANIME_PATHS.WATCH}/${product.slug}` : `${ANIME_PATHS.WATCH}/${anime.slug}`}
+                  className="group block"
+                >
+                  <div className="relative rounded-md overflow-hidden border">
+                    <div className="h-[100px] w-[200px] mx-auto bg-muted">
+                      <div className="relative h-full w-full">
+                        <MVImage
+                          src={product.thumnail ? product.thumnail : '/images/placeholder_.jpg'}
+                          alt={`Tập ${product.seri} - ${anime.name}`}
+                          fill
+                          sizes="200px"
+                          className="object-cover group-hover:brightness-75 transition-all duration-300"
+                          priority={index < 4}
+                        />
+                        
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="bg-black/60 rounded-full p-3 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                            <svg 
+                              className="w-6 h-6 text-white" 
+                              fill="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    {anime.isMovie !== "drama" ? (
+                      <h3 className="text-sm font-medium">Full</h3>
+                    ) : (
+                      <h3 className="text-sm font-medium">Tập {product.seri}</h3>
+                    )}
+                  </div>
+                </MVLink>
+              ))
+              : null}
+          </div>
+          )}
+        </div>
         <Gallery
           images={anime.posters}
           className="mb-6"
         />
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="episodes">Danh sách tập</TabsTrigger>
-            <TabsTrigger value="comments">Bình luận</TabsTrigger>
-          </TabsList>
-          <TabsContent value="info" className="space-y-6">
-            <Collapsible
-              open={isDescriptionOpen}
-              onOpenChange={setIsDescriptionOpen}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full mb-3 transition-colors">
-                <h2 className="text-xl font-semibold">Nội dung</h2>
-                {isDescriptionOpen ? (
-                  <ChevronUp className="h-5 w-5" />
-                ) : (
-                  <ChevronDown className="h-5 w-5" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2">
-                <p className="text-muted-foreground leading-relaxed">
-                  {anime.des}
-                </p>
-              </CollapsibleContent>
-            </Collapsible>
-            <Separator />
-            <div>
-              <h2 className="text-xl font-semibold mb-3">Thông tin chi tiết</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex gap-3 items-center">
-                  <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <h3 className="font-medium">Thể loại</h3>
-                    <p className="text-muted-foreground">
-                      {anime.tags?.map((item) => item.name).join(", ")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-center">
-                  <CalendarDays className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <h3 className="font-medium">Năm phát hành</h3>
-                    <p className="text-muted-foreground">{anime.year}</p>
-                  </div>
-                </div>
-                {anime.week?.name && (
-                  <div className="flex gap-3 items-center">
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <h3 className="font-medium">Lịch chiếu</h3>
-                      <p className="text-muted-foreground">
-                        {anime.week.name} hàng tuần, {anime.hour}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex gap-3 items-center">
-                  <Clock3 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <h3 className="font-medium">Thời lượng</h3>
-                    <p className="text-muted-foreground">{anime.time}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-center">
-                  <Languages className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <h3 className="font-medium">Ngôn ngữ</h3>
-                    <p className="text-muted-foreground">
-                      {anime.lang === "ThuyetMinh-Vietsub" ? "Thuyết minh + Vietsub" : 
-                       anime.lang === "ThuyetMinh" ? "Thuyết minh" : "Vietsub"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 items-center">
-                  <Monitor className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <h3 className="font-medium">Chất lượng</h3>
-                    <p className="text-muted-foreground">{anime.quality}</p>
-                  </div>
-                </div>
-                {anime.isMovie === "drama" && (
-                  <div className="flex gap-2 items-center">
-                    <Play className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <h3 className="font-medium">Số tập</h3>
-                      <p className="text-muted-foreground">{anime.sumSeri} tập</p>
-                    </div>
-                  </div>
-                )}
-               
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="episodes">
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold mb-3">Danh sách tập</h2>
-              <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
-                {anime.products && anime.products.length > 0
-                  ? anime.products.map((product, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
-                            {anime.isMovie === "drama" ? product.seri : "Full"}
-                          </div>
-                          <div>
-                            {anime.isMovie !== "drama" ? (
-                              <h3 className="font-medium">Full</h3>
-                            ) : (
-                              <h3 className="font-medium">
-                                Tập {product.seri}
-                              </h3>
-                            )}
-                            <p className="text-sm text-muted-foreground">
-                              Đã phát hành
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          asChild
-                          disabled={!product.isApproved}
-                        >
-                          {anime.isMovie === "drama" ? (
-                            <MVLink
-                              href={`${ANIME_PATHS.WATCH}/${product.slug}`}
-                            >
-                              Xem
-                            </MVLink>
-                          ) : (
-                            <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}>
-                              Xem
-                            </MVLink>
-                          )}
-                        </Button>
-                      </div>
-                    ))
-                  : null}
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="comments">
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold mb-3">Bình luận</h2>
+        {/* Thông tin chi tiết */}
+        <div className="space-y-6 mb-8">
+          <Collapsible
+            open={isDescriptionOpen}
+            onOpenChange={setIsDescriptionOpen}
+          >
+            <CollapsibleTrigger className="flex items-center justify-between w-full mb-3 transition-colors">
+              <h2 className="text-xl font-semibold">Nội dung</h2>
+              {isDescriptionOpen ? (
+                <ChevronUp className="h-5 w-5" />
+              ) : (
+                <ChevronDown className="h-5 w-5" />
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2">
+              <p className="text-muted-foreground leading-relaxed">
+                {anime.des}
+              </p>
+            </CollapsibleContent>
+          </Collapsible>
+          <Separator />
 
-              {/* Comment Form */}
-              <div className="p-4 rounded-lg border mb-6">
-                <h3 className="font-medium mb-2">Thêm bình luận</h3>
-                <textarea
-                  className="w-full p-2 border rounded-md mb-2 min-h-[100px]"
-                  placeholder="Viết bình luận của bạn..."
-                />
-                <div className="flex justify-end">
-                  <Button>Đăng bình luận</Button>
-                </div>
-              </div>
+        </div>
+        {/* Bình luận */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold mb-3">Bình luận</h2>
 
-              <div className="space-y-6">
-                {/* {anime.comment && anime.comment.length > 0 ? (
-                  anime.comment.map((comment, i) => (
-                    <div key={i} className="p-4 rounded-lg border">
-                      <div className="flex justify-between mb-2">
-                        <div className="font-medium">{comment.user}</div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Star className="h-3 w-3 text-yellow-500" />
-                          <span>{comment.rating}/10</span>
-                        </div>
-                      </div>
-                      <p className="text-muted-foreground mb-2">
-                        {comment.content}
-                      </p>
-                      <div className="text-xs text-muted-foreground">
-                        {comment.date}
-                      </div>
-                    </div>
-                  ))
-                ) : ( */}
-                  <div className="text-center text-muted-foreground py-8">
-                    Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
-                  </div>
-                {/* )} */}
-              </div>
+          {/* Comment Form */}
+          <div className="p-4 rounded-lg border mb-6">
+            <h3 className="font-medium mb-2">Thêm bình luận</h3>
+            <textarea
+              className="w-full p-2 border rounded-md mb-2 min-h-[100px]"
+              placeholder="Viết bình luận của bạn..."
+            />
+            <div className="flex justify-end">
+              <Button>Đăng bình luận</Button>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+
+          <div className="space-y-6">
+            <div className="text-center text-muted-foreground py-8">
+              Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+            </div>
+          </div>
+        </div>
       </Wrapper>
     </>
   );

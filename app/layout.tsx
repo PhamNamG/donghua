@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { SeriesProvider } from "@/contexts/SeriesContext";
 import { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { ThemeScript } from "@/components/theme-script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -80,8 +81,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body className={inter.className}>
+        <ThemeScript />
         <Providers>
           <SeriesProvider>
             <Header />

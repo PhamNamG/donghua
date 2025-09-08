@@ -16,6 +16,7 @@ export interface FormattedAnimeData {
         slug: string;
         seri: string;
         isApproved: boolean;
+        thumnail:string;
     }[];
     type: string;
     week: {
@@ -42,6 +43,7 @@ export interface FormattedAnimeData {
     posters: {
         imageUrl: string;
     }[];
+    status:string
 }
 
 export function safeString(value: string) {
@@ -108,6 +110,7 @@ export function formatAnimeData(anime: FormattedAnimeData) {
         tags: safeTags(anime.tags),
         zaloGroupLink: safeString(anime.zaloGroupLink),
         posters: safeArray(anime.posters),
+        status:safeString(anime.status)
     };
 }
 

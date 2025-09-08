@@ -12,6 +12,7 @@ import { NAVIGATION } from '@/constant';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { useWatchlistStore } from '@/store/watchlist';
+import { ThemeToggle } from '@/components/theme-toggle-select-dynamic';
 
 export default function Header() {
   const pathname = usePathname();
@@ -71,6 +72,7 @@ export default function Header() {
           
           {/* Desktop Search and Profile */}
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
         
             <Tooltip>
               <TooltipTrigger asChild>
@@ -101,6 +103,7 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
