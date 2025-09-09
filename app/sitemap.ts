@@ -27,14 +27,14 @@ const generateSitemapXML = async (): Promise<MetadataRoute.Sitemap> => {
       priority: 1,
     });
 
-    item.products.forEach((product) => {
-      sitemap.push({
-        url: `${baseUrl}${ANIME_PATHS.WATCH}/${product?.slug}`,
-        lastModified: new Date(),
-        changeFrequency: "daily",
-        priority: 0.8,
-      });
-    });
+    // item.products.forEach((product) => {
+    //   sitemap.push({
+    //     url: `${baseUrl}${ANIME_PATHS.WATCH}/${product?.slug}`,
+    //     lastModified: new Date(),
+    //     changeFrequency: "daily",
+    //     priority: 0.8,
+    //   });
+    // });
   });
 
   return sitemap;
