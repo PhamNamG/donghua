@@ -272,7 +272,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 max-h-[300px] overflow-y-auto pr-2">
               {anime.products && anime.products.length > 0
                 ? anime.products.map((product, index) => (
-                  <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}   key={index}>
+                  <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`}   key={index}>
                   <div
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
