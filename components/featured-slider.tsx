@@ -14,8 +14,6 @@ import type { Poster } from "@/services/api/poster.api"
 import MVImage from "./ui/image"
 import MVLink from "./Link"
 
-
-
 export function FeaturedSlider() {
   const { data, isLoading, error } = useSlider()
 
@@ -75,13 +73,15 @@ export function FeaturedSlider() {
                         Xem ngay
                       </Button>
                     </MVLink>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs sm:text-sm text-white border-white/30 bg-white/10 hover:bg-white/20"
-                    >
-                      Tìm hiểu thêm
-                    </Button>
+                    <MVLink href={`${poster.link}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs sm:text-sm text-white border-white/30 bg-white/10 hover:bg-white/20"
+                      >
+                        Tìm hiểu thêm
+                      </Button>
+                    </MVLink>
                   </div>
                 </div>
               </div>

@@ -95,7 +95,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
       <div className="relative h-[500px] md:h-[400px] w-full overflow-hidden">
         <div className="absolute inset-0">
           <MVImage
-            src={anime.posters[0]?.imageUrl ? anime.posters[0]?.imageUrl : anime.linkImg}
+            src={anime.posters.find((poster) => poster.coverPoster === 'cover')?.imageUrl || anime.linkImg}
             alt={`${anime.name} - ${anime.anotherName} - Phim hoạt hình trung quốc`}
             fill
             className="object-cover object-center brightness-[0.5] w-full h-full "
@@ -164,7 +164,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
                     <div className="relative bg-gradient-to-br from-white/90 to-white/70 dark:from-white/10 dark:to-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-white/20 rounded-xl px-4 py-2 flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                       <span className="text-sm font-semibold text-gray-800 dark:text-white">
-                        {anime.week.name}, {anime.hour}
+                        {anime.week.map((week) => week.name).join(", ")}, {anime.hour}
                       </span>
                       <div className="ml-2 w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse" />
                     </div>
@@ -272,97 +272,96 @@ export function AnimeClient({ anime }: AnimeClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 max-h-[300px] overflow-y-auto pr-2">
               {anime.products && anime.products.length > 0
                 ? anime.products.map((product, index) => (
+                  <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}   key={index}>
                   <div
-                    key={index}
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
-                        {anime.isMovie === "drama" ? product.seri : "Full"}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
+                          {anime.isMovie === "drama" ? product.seri : "Full"}
+                        </div>
+                        <div>
+                          {anime.isMovie !== "drama" ? (
+                            <h3 className="font-medium">Full</h3>
+                          ) : (
+                            <h3 className="font-medium">
+                              Tập {product.seri}
+                            </h3>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            Đã phát hành
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        {anime.isMovie !== "drama" ? (
-                          <h3 className="font-medium">Full</h3>
+                      <Button
+                        size="sm"
+                        asChild
+                        disabled={!product.isApproved}
+                      >
+                        {anime.isMovie === "drama" ? (
+                          <div>
+                            <Play className="w-4 h-4 lg:block hidden" />
+                            <span className="lg:hidden">Xem</span>
+                          </div>
                         ) : (
-                          <h3 className="font-medium">
-                            Tập {product.seri}
-                          </h3>
+                          <div>
+                            <Play className="w-4 h-4 lg:block hidden" />
+                            <span className="lg:hidden">Xem</span>
+                          </div>
                         )}
-                        <p className="text-sm text-muted-foreground">
-                          Đã phát hành
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      asChild
-                      disabled={!product.isApproved}
-                    >
-                      {anime.isMovie === "drama" ? (
-                        <MVLink
-                          href={`${ANIME_PATHS.WATCH}/${product.slug}`}
-                        >
-                          <Play className="w-4 h-4 lg:block hidden" />
-                          <span className="lg:hidden">Xem</span>
-                        </MVLink>
-                      ) : (
-                        <MVLink href={`${ANIME_PATHS.WATCH}/${anime.slug}`}>
-                          <Play className="w-4 h-4 lg:block hidden" />
-                          <span className="lg:hidden">Xem</span>
-                        </MVLink>
-                      )}
-                    </Button>
+                      </Button>
                   </div>
+                    </MVLink>
                 ))
                 : null}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-7 gap-4 pr-1 max-h-[300px] overflow-y-auto">
-            {anime.products && anime.products.length > 0
-              ? anime.products.map((product, index) => (
-                <MVLink
-                  key={index}
-                  href={anime.isMovie === "drama" ? `${ANIME_PATHS.WATCH}/${product.slug}` : `${ANIME_PATHS.WATCH}/${anime.slug}`}
-                  className="group block"
-                >
-                  <div className="relative rounded-md overflow-hidden border">
-                    <div className="h-[100px] w-[200px] mx-auto bg-muted">
-                      <div className="relative h-full w-full">
-                        <MVImage
-                          src={product.thumnail ? product.thumnail : '/images/placeholder_.jpg'}
-                          alt={`Tập ${product.seri} - ${anime.name}`}
-                          fill
-                          sizes="200px"
-                          className="object-cover group-hover:brightness-75 transition-all duration-300"
-                          priority={index < 4}
-                        />
-                        
-                        {/* Play Button Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="bg-black/60 rounded-full p-3 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                            <svg 
-                              className="w-6 h-6 text-white" 
-                              fill="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
+              {anime.products && anime.products.length > 0
+                ? anime.products.map((product, index) => (
+                  <MVLink
+                    key={index}
+                    href={anime.isMovie === "drama" ? `${ANIME_PATHS.WATCH}/${product.slug}` : `${ANIME_PATHS.WATCH}/${anime.slug}`}
+                    className="group block"
+                  >
+                    <div className="relative rounded-md overflow-hidden border">
+                      <div className="h-[100px] w-[200px] mx-auto bg-muted">
+                        <div className="relative h-full w-full">
+                          <MVImage
+                            src={product.thumnail ? product.thumnail : '/images/placeholder_.jpg'}
+                            alt={`Tập ${product.seri} - ${anime.name}`}
+                            fill
+                            sizes="200px"
+                            className="object-cover group-hover:brightness-75 transition-all duration-300"
+                            priority={index < 4}
+                          />
+
+                          {/* Play Button Overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="bg-black/60 rounded-full p-3 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                              <svg
+                                className="w-6 h-6 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-2">
-                    {anime.isMovie !== "drama" ? (
-                      <h3 className="text-sm font-medium">Full</h3>
-                    ) : (
-                      <h3 className="text-sm font-medium">Tập {product.seri}</h3>
-                    )}
-                  </div>
-                </MVLink>
-              ))
-              : null}
-          </div>
+                    <div className="mt-2">
+                      {anime.isMovie !== "drama" ? (
+                        <h3 className="text-sm font-medium">Full</h3>
+                      ) : (
+                        <h3 className="text-sm font-medium">Tập {product.seri}</h3>
+                      )}
+                    </div>
+                  </MVLink>
+                ))
+                : null}
+            </div>
           )}
         </div>
         <Gallery

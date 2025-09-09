@@ -2,16 +2,22 @@
 import React from "react"
 import { useState, useRef, useEffect } from "react"
 import CryptoJS from "crypto-js"
-import { Monitor, Cloud, Link, Shield } from "lucide-react"
+import { Monitor, Cloud, Link, Shield, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CombiningEpisode } from "@/app/xem-phim/[slug]/watch-client"
+import { useCreateReport } from "@/hooks/useReport"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
+import { toast } from 'react-toastify'
+import { AxiosError } from "axios"
 
 interface Product {
   _id: string
   seri: string
   isApproved: boolean
   view: number
-  copyright?: string
+  copyright?: string;
+  slug: string
 }
 
 interface Category {
@@ -54,10 +60,13 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const { mutate: createReport, isPending: isReporting, isError: isReportError, reset: resetReport } = useCreateReport()
+  const [reportComment, setReportComment] = useState("")
+  const [isReportOpen, setIsReportOpen] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
 
   // State to track if component has mounted
   const [hasMounted, setHasMounted] = useState(false)
-
   // Effect to set initial server preference
   useEffect(() => {
     if (!hasMounted && anime) {
@@ -101,7 +110,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
         try {
           const secretKey = process.env.NEXT_PUBLIC_SECERT_CRYPTO_KEY_PRODUCTS_DAILYMOTION_SERVER || ""
           const decodedData = CryptoJS.AES.decrypt(anime.dailyMotionServer, secretKey).toString(CryptoJS.enc.Utf8)
-          
+
           if (decodedData && isValidUrl(decodedData)) {
             setVideoSource(addAdBlockParams(decodedData))
             setIsLoading(false)
@@ -137,11 +146,11 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     // If current server failed, try others in order
     if (!sourceSet) {
       sourceSet = tryDailyMotion() ||
-                 trySetVideoSource(anime.server2) ||
-                 trySetVideoSource(anime.link) ||
-                 trySetVideoSource(anime.voiceOverLink) ||
-                 trySetVideoSource(anime.voiceOverLink2)
-      
+        trySetVideoSource(anime.server2) ||
+        trySetVideoSource(anime.link) ||
+        trySetVideoSource(anime.voiceOverLink) ||
+        trySetVideoSource(anime.voiceOverLink2)
+
       if (!sourceSet) {
         setVideoSource(null)
       }
@@ -393,20 +402,109 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
         </div>
 
         {/* Ad Block Toggle */}
-        <button
-          onClick={() => setAdBlockEnabled(!adBlockEnabled)}
-          className={cn(
-            "flex items-center px-3 py-1.5 rounded text-xs font-medium transition-all",
-            adBlockEnabled
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-          )}
-          title={adBlockEnabled ? "Disable ad blocking" : "Enable ad blocking"}
-        >
-          <Shield className="h-3 w-3 mr-1" />
-          {adBlockEnabled ? "Ad Block ON" : "Ad Block OFF"}
-        </button>
+        <div className="flex item-center gap-2">
+          <button
+            onClick={() => setAdBlockEnabled(!adBlockEnabled)}
+            className={cn(
+              "flex items-center px-3 py-1.5 rounded text-xs font-medium transition-all",
+              adBlockEnabled
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+            )}
+            title={adBlockEnabled ? "Disable ad blocking" : "Enable ad blocking"}
+          >
+            <Shield className="h-3 w-3 mr-1" />
+            {adBlockEnabled ? "Ad Block ON" : "Ad Block OFF"}
+          </button>
+          {/* Report Button */}
+          <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size={'sm'}
+                onClick={() => { resetReport(); }}
+                className="flex items-center gap-1 text-xs"
+                title="Báo lỗi video"
+                variant={'outline'}
+              >
+                <Flag />
+                Báo lỗi
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Báo lỗi video</DialogTitle>
+                <DialogDescription>
+                  Mô tả ngắn gọn vấn đề bạn gặp phải (tùy chọn)
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-1">
+                <textarea
+                  className="mt-1 w-full border rounded p-2 text-sm dark:bg-neutral-800 dark:border-neutral-700"
+                  placeholder="Ví dụ: Không phát được, sai tập, âm thanh lỗi..."
+                  value={reportComment}
+                  onChange={(e) => { setReportComment(e.target.value); if (reportError) setReportError(null); }}
+                  rows={4}
+                />
+              </div>
+              {reportError && (
+                <p className="mt-2 text-xs text-red-600">{reportError}</p>
+              )}
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsReportOpen(false)}
+                  className="text-xs"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  disabled={isReporting}
+                  onClick={() => {
+                    const trimmed = reportComment.trim()
+                    if (!episode?.slug) {
+                      setReportError("Thiếu thông tin tập phim")
+                      return
+                    }
+                    if (trimmed) {
+                      if (trimmed.length < 10 || trimmed.length > 500) {
+                        setReportError("Nội dung báo cáo phải từ 10 đến 500 ký tự")
+                        return
+                      }
+                      const spamLinkPattern = /(http|https|www|\.com|\.net|\.org)/i
+                      if (spamLinkPattern.test(trimmed)) {
+                        setReportError("Không được phép gửi link trong báo cáo")
+                        return
+                      }
+                    }
+                    createReport(
+                      { productId: episode.slug, comment: trimmed || undefined },
+                      {
+                        onSuccess: (data: { message: string }) => {
+                          setReportComment("")
+                          setIsReportOpen(false)
+                          toast.success(data.message)
+                        },
+                        onError: (error) => {
+                          const err = error as AxiosError<{ message: string }>;
+                          console.error(err.response?.data.message);
+                        }
+                      }
+                    )
+                  }}
+                  className="text-xs"
+                >
+                  {isReporting ? "Đang gửi..." : "Gửi báo lỗi"}
+                </Button>
+              </div>
+              {isReportError && (
+                <p className="mt-2 text-xs text-red-600">Gửi thất bại. Thử lại sau.</p>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
     </div>
   )
 }

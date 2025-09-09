@@ -31,6 +31,9 @@ export const API_ENDPOINTS = {
   },
   TAGS:{
     ALL:'/tags'
+  },
+  REPORTS: {
+    CREATE: '/reports'
   }
 } as const;
 

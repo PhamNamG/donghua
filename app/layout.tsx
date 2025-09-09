@@ -7,6 +7,7 @@ import { SeriesProvider } from "@/contexts/SeriesContext";
 import { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { ThemeScript } from "@/components/theme-script";
+import ToastContainerCusTomsmer from "@/components/toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -89,6 +90,7 @@ export default function RootLayout({
             <Header />
             {children}
             <Footer />
+            <ToastContainerCusTomsmer />
           </SeriesProvider>
         </Providers>
         <GoogleAnalytics gaId={`${process.env.NEXT_PUBLIC_G_ID}`} />

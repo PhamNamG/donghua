@@ -16,12 +16,12 @@ export interface FormattedAnimeData {
         slug: string;
         seri: string;
         isApproved: boolean;
-        thumnail:string;
+        thumnail: string;
     }[];
     type: string;
     week: {
-        name: string
-    };
+        name: string;
+    }[];
     up: number;
     year: string;
     time: string;
@@ -42,8 +42,9 @@ export interface FormattedAnimeData {
     zaloGroupLink: string;
     posters: {
         imageUrl: string;
+        coverPoster:string;
     }[];
-    status:string
+    status: string
 }
 
 export function safeString(value: string) {
@@ -88,9 +89,7 @@ export function formatAnimeData(anime: FormattedAnimeData) {
         sumSeri: safeString(anime.sumSeri),
         products: safeArray(anime.products),
         type: safeString(anime.type),
-        week: anime.week && typeof anime.week === 'object' && 'name' in anime.week 
-            ? { name: safeString(anime.week.name) }
-            : { name: '' },
+        week: safeArray(anime.week),
         up: safeNumber(anime.up),
         year: safeString(anime.year),
         time: safeString(anime.time),
@@ -110,7 +109,7 @@ export function formatAnimeData(anime: FormattedAnimeData) {
         tags: safeTags(anime.tags),
         zaloGroupLink: safeString(anime.zaloGroupLink),
         posters: safeArray(anime.posters),
-        status:safeString(anime.status)
+        status: safeString(anime.status)
     };
 }
 
