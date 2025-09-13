@@ -6,7 +6,6 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Wrapper } from "@/components/wrapper"
 import MVLink from "@/components/Link"
-import { SearchForm } from "./_components/SearchForm"
 import { SearchFilters } from "./_components/SearchFilters"
 import { SearchResults } from "./_components/SearchResults"
 import { useTags } from "@/hooks/useTags"
@@ -19,7 +18,6 @@ export default function SearchPage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [statusFilter, setStatusFilter] = useState("")
-  const [showFilters, setShowFilters] = useState(false)
 
   const { data: categoriesResponse } = useTags()
   const { data: searchResults, isLoading } = useSearchAnime(debouncedSearchQuery, {
@@ -31,7 +29,7 @@ export default function SearchPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 500) 
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [searchQuery])
@@ -46,20 +44,20 @@ export default function SearchPage() {
     }
   }, [searchParams])
 
-  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const url = new URL(window.location.href)
-    url.searchParams.set("q", searchQuery)
-    window.history.pushState({}, "", url.toString())
-  }
+  // const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault()
+  //   const url = new URL(window.location.href)
+  //   url.searchParams.set("q", searchQuery)
+  //   window.history.pushState({}, "", url.toString())
+  // }
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategories = selectedCategories.includes(categoryId)
       ? selectedCategories.filter((id) => id !== categoryId)
       : [...selectedCategories, categoryId]
-    
+
     setSelectedCategories(newCategories)
-    
+
     const url = new URL(window.location.href)
     if (newCategories.length > 0) {
       url.searchParams.set("categories", newCategories.join(","))
@@ -72,7 +70,7 @@ export default function SearchPage() {
   const handleStatusChange = (status: string) => {
     const newStatus = status === statusFilter ? "" : status
     setStatusFilter(newStatus)
-    
+
     // Update URL with new status
     const url = new URL(window.location.href)
     if (newStatus) {
@@ -86,7 +84,7 @@ export default function SearchPage() {
   const handleClearFilters = () => {
     setSelectedCategories([])
     setStatusFilter("")
-    
+
     // Clear filter parameters from URL
     const url = new URL(window.location.href)
     url.searchParams.delete("categories")
@@ -119,31 +117,18 @@ export default function SearchPage() {
               onClearFilters={handleClearFilters}
             />
           </div>
-
           <div className="space-y-6">
-            {/* Search Form */}
-            <SearchForm
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onSubmit={handleSearchSubmit}
-              isLoading={isLoading}
-              onFilterClick={() => setShowFilters(!showFilters)}
-            />
-
-            {/* Mobile Filters */}
             <div className="md:hidden">
-              {showFilters && (
-                <div className="mt-4">
-                  <SearchFilters
-                    categories={categories}
-                    selectedCategories={selectedCategories}
-                    statusFilter={statusFilter}
-                    onCategoryChange={handleCategoryChange}
-                    onStatusChange={handleStatusChange}
-                    onClearFilters={handleClearFilters}
-                  />
-                </div>
-              )}
+              <div className="mt-4">
+                <SearchFilters
+                  categories={categories}
+                  selectedCategories={selectedCategories}
+                  statusFilter={statusFilter}
+                  onCategoryChange={handleCategoryChange}
+                  onStatusChange={handleStatusChange}
+                  onClearFilters={handleClearFilters}
+                />
+              </div>
             </div>
 
             {/* Search Results */}

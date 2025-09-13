@@ -1,7 +1,6 @@
 "use client"
 import React from "react"
 import { useState, useRef, useEffect } from "react"
-import CryptoJS from "crypto-js"
 import { Monitor, Cloud, Link, Shield, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CombiningEpisode } from "@/app/xem-phim/[slug]/watch-client"
@@ -106,19 +105,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
 
     const tryDailyMotion = (): boolean => {
-      if (anime.dailyMotionServer) {
-        try {
-          const secretKey = process.env.NEXT_PUBLIC_SECERT_CRYPTO_KEY_PRODUCTS_DAILYMOTION_SERVER || ""
-          const decodedData = CryptoJS.AES.decrypt(anime.dailyMotionServer, secretKey).toString(CryptoJS.enc.Utf8)
-
-          if (decodedData && isValidUrl(decodedData)) {
-            setVideoSource(addAdBlockParams(decodedData))
-            setIsLoading(false)
-            return true
-          }
-        } catch (error) {
-          console.error("Error decoding Dailymotion server:", error)
-        }
+      if (anime.dailyMotionServer && isValidUrl(anime.dailyMotionServer)) {
+        setVideoSource(addAdBlockParams(anime.dailyMotionServer))
+        setIsLoading(false)
+        return true
       }
       return false
     }
