@@ -27,9 +27,8 @@ import { SOCIAL_LINKS } from "@/constant/social.constant"
 import { useWatchlistStore } from "@/store/watchlist"
 import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
-import { useCategoryNominated } from "@/hooks/useAnime"
-import "./style.css"
 import NominatedFilmSidebar from "./_components/NominatedFilm"
+import "./style.css"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -40,20 +39,23 @@ export interface AnimeProduct {
 
 interface AnimeClientProps {
   anime: FormattedAnimeData
-  seriesId?: string
-  categoryId?: string
+  nominatedData: {
+    data: {
+      name: string
+      slug: string
+    }[]
+  }
 }
 
-export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
+export function AnimeClient({ anime, nominatedData }: AnimeClientProps) {
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true)
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true)
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore()
-  const { data: nominatedData } = useCategoryNominated(seriesId || "", categoryId || "");
   const isInList = isInWatchlist(anime._id)
   const handleWatchlistClick = () => {
     if (isInList) {
-      removeAnime(anime._id)
-    } else {
+        removeAnime(anime._id)
+      } else {
       addAnime({
         _id: anime._id,
         name: anime.name,

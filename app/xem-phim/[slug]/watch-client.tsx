@@ -260,7 +260,7 @@ export function WatchClient({ anime }: { anime: Anime }) {
                   />
               </div>
             </div>
-            <div className="hidden md:block w-full lg:w-1/4">
+            <div className="hidden md:block w-full lg:w-1/4 space-y-6">
               <div className="bg-card rounded-lg shadow-sm p-4">
                 <div className="mb-4">
                   <SwitchEpisode isCompactEpisodes={isCompactEpisodes} setIsCompactEpisodes={setIsCompactEpisodes} />
@@ -321,9 +321,7 @@ export function WatchClient({ anime }: { anime: Anime }) {
                   )}
                 </Tabs>
               </div>
-              <div className="lg:w-80 flex-shrink-0">
-                <NominatedFilmSidebar />
-              </div>
+              <NominatedFilmSidebar />
             </div>
           </div>
         </div>
