@@ -62,9 +62,6 @@ export async function getCategoryNominated(seriesId: string, categoryId: string)
             `${API_BASE_URL}${API_ENDPOINTS.CATEGORIES_NOMINATED}?${queryParams}`,
             {
                 method: "GET",
-                next: {
-                    revalidate: CACHE_SETTINGS.REVALIDATE_3600
-                }
             }
         );
         if (!response.ok) {

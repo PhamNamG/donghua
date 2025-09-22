@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { AnimeClient } from "../anime-client"
-import { getAnimeData, getCategoryNominated } from "@/services/anime.server";
+import { getAnimeData, getAnimePopular, getCategoryNominated } from "@/services/anime.server";
 import { ANIME_PATHS } from "@/constant/path.constant";
 import { SEOOptimizer } from "@/components/seo-optimizer";
 import { formatAnimeData, validateAnimeData, safeSubstring, FormattedAnimeData } from "@/lib/data-utils";
@@ -106,8 +106,8 @@ export async function generateMetadata(
 
 export default async function AnimePage({ params }: { params: tParams }) {
   const { slug } = await params
-
   const animeData = await getAnimeData(slug)
+  const topCategory = await getAnimePopular("150", "250")
   const nominatedData = await getCategoryNominated(animeData?.relatedSeasons, animeData?._id)
   if (!animeData || !validateAnimeData(animeData)) {
     notFound()
@@ -119,6 +119,7 @@ export default async function AnimePage({ params }: { params: tParams }) {
       <AnimeClient
         anime={formattedData}
         nominatedData={nominatedData}
+        topCategory={topCategory}
       />
       <SEOOptimizer anime={formattedData} />
     </>

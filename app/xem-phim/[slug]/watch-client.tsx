@@ -22,6 +22,7 @@ import NominatedFilmSidebar from "@/app/phim/_components/NominatedFilm";
 import "./style.css";
 import { SwitchEpisode } from "../components/switch-episode";
 import { EpisodeDescriptions } from "../components/episode-descriptions";
+import { AnimeResponse } from "@/services/api/anime.api";
 
 interface Product {
   _id: string;
@@ -85,7 +86,7 @@ export interface Anime {
 }
 
 
-export function WatchClient({ anime }: { anime: Anime }) {
+export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory: AnimeResponse[] }) {
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true);
   const addToHistory = useHistoryStore((state) => state.addToHistory);
   const desktopEpisodeListRef = useRef<HTMLDivElement>(null);
@@ -321,7 +322,7 @@ export function WatchClient({ anime }: { anime: Anime }) {
                   )}
                 </Tabs>
               </div>
-              <NominatedFilmSidebar />
+              <NominatedFilmSidebar topCategory={topCategory} />
             </div>
           </div>
         </div>

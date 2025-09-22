@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { WatchClient } from "./watch-client"
-import { getAnimeEpisode } from "@/services/anime.server"
+import { getAnimeEpisode, getAnimePopular } from "@/services/anime.server"
 import { ANIME_PATHS } from "@/constant/path.constant";
 import { safeSubstring } from "@/lib/data-utils";
 import { WatchSEOOptimizer } from "@/components/watch-seo-optimizer";
@@ -106,7 +106,7 @@ export async function generateMetadata(
 
 export default async function WatchPage({ params }: { params: tParams }) {
   const { slug } = await params
-
+  const topCategory = await getAnimePopular("150", "250")
   const animeData = await getAnimeEpisode(slug)
   if (!animeData) {
     notFound()
@@ -115,6 +115,7 @@ export default async function WatchPage({ params }: { params: tParams }) {
     <>
       <WatchClient
         anime={animeData}
+        topCategory={topCategory}
       />
       <WatchSEOOptimizer anime={animeData} />
     </>

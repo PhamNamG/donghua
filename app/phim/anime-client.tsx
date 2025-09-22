@@ -29,6 +29,7 @@ import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
 import NominatedFilmSidebar from "./_components/NominatedFilm"
 import "./style.css"
+import { AnimeResponse } from "@/services/api/anime.api"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -45,9 +46,10 @@ interface AnimeClientProps {
       slug: string
     }[]
   }
+  topCategory: AnimeResponse[]
 }
 
-export function AnimeClient({ anime, nominatedData }: AnimeClientProps) {
+export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientProps) {
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true)
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true)
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore()
@@ -418,7 +420,7 @@ export function AnimeClient({ anime, nominatedData }: AnimeClientProps) {
             </div>
           </div>
           <div className="lg:w-80 flex-shrink-0">
-            <NominatedFilmSidebar />
+            <NominatedFilmSidebar topCategory={topCategory} />
           </div>
         </div>
 
