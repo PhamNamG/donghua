@@ -47,13 +47,20 @@ export interface AnimeResponse {
     totalCount: number;
 }
 
+export interface AnimeResponseNominated {
+    data: Anime[]
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+}
+
 export const animeApi = {
     getLatest: async (): Promise<AnimeResponse> => {
         return baseApi.get<AnimeResponse>(API_ENDPOINTS.ANIME.LATEST);
     },
 
-    getPopular: async (): Promise<AnimeResponse> => {
-        return baseApi.get<AnimeResponse>(API_ENDPOINTS.ANIME.POPULAR);
+    getPopular: async (width: string, height: string): Promise<AnimeResponse> => {
+        return baseApi.get<AnimeResponse>(`${API_ENDPOINTS.ANIME.POPULAR}?width=${width}&height=${height}`);
     },
 
     getCategory: async (page: number): Promise<AnimeResponse> => {
@@ -80,5 +87,13 @@ export const animeApi = {
         }
         
         return baseApi.get<AnimeResponse>(url);
+    },
+
+    getCategoryNominated: async (seriesId: string, categoryId: string): Promise<AnimeResponseNominated> => {
+        const queryParams = new URLSearchParams();
+        if (seriesId) queryParams.append('seriesId', seriesId);
+        if (categoryId) queryParams.append('categoryId', categoryId);
+        
+        return baseApi.get<AnimeResponseNominated>(`${API_ENDPOINTS.ANIME.CATEGORY_NOMINATED}?${queryParams}`);
     }
 }; 

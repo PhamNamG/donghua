@@ -27,7 +27,9 @@ import { SOCIAL_LINKS } from "@/constant/social.constant"
 import { useWatchlistStore } from "@/store/watchlist"
 import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
-
+import NominatedFilmSidebar from "../xem-phim/_components/NominatedFilm"
+import { useCategoryNominated } from "@/hooks/useAnime"
+import "./style.css"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -38,15 +40,16 @@ export interface AnimeProduct {
 
 interface AnimeClientProps {
   anime: FormattedAnimeData
+  seriesId?: string
+  categoryId?: string
 }
 
-export function AnimeClient({ anime }: AnimeClientProps) {
+export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true)
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true)
-  const [isShowEpisodeLinks, setIsShowEpisodeLinks] = useState(false)
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore()
+  const { data: nominatedData } = useCategoryNominated(seriesId || "", categoryId || "");
   const isInList = isInWatchlist(anime._id)
-
   const handleWatchlistClick = () => {
     if (isInList) {
       removeAnime(anime._id)
@@ -84,7 +87,7 @@ export function AnimeClient({ anime }: AnimeClientProps) {
   const currentEpisodes = Array.isArray(anime.products) ? anime.products.length : 0
   const statusLower = (anime.status || "").toLowerCase()
   const isCompleted =
-    statusLower === "completed" || statusLower === "complete" || (totalEpisodes > 0 && currentEpisodes >= totalEpisodes)
+    statusLower === "completed" || statusLower === "complete" || (totalEpisodes > 0 && Number(anime.products[0].seri) >= totalEpisodes)
   const isAiring =
     !isCompleted &&
     (statusLower === "pending" ||
@@ -231,261 +234,200 @@ export function AnimeClient({ anime }: AnimeClientProps) {
       </div>
 
       <Wrapper>
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">Danh sách tập</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Rút gọn</span>
-              <Switch
-                checked={isCompactEpisodes}
-                onCheckedChange={setIsCompactEpisodes}
-                className="data-[state=checked]:bg-[#FFD875]"
-              />
-            </div>
-          </div>
+        <div className="flex flex-col lg:flex-row gap-6 mb-8">
+          {/* Main content - Episode List */}
+          <div>
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-semibold">Danh sách tập</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Rút gọn</span>
+                  <Switch
+                    checked={isCompactEpisodes}
+                    onCheckedChange={setIsCompactEpisodes}
+                    className="data-[state=checked]:bg-[#FFD875]"
+                  />
+                </div>
+              </div>
 
-          {isCompactEpisodes ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 max-h-[300px] overflow-y-auto pr-2">
-              {anime.products && anime.products.length > 0
-                ? anime.products.map((product, index) => (
-                    <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`} key={index}>
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
-                            {anime.isMovie === "drama" ? product.seri : "Full"}
-                          </div>
-                          <div>
-                            {anime.isMovie !== "drama" ? (
-                              <h3 className="font-medium">Full</h3>
-                            ) : (
-                              <h3 className="font-medium">Tập {product.seri}</h3>
-                            )}
-                            <p className="text-sm text-muted-foreground">Đã phát hành</p>
-                          </div>
-                        </div>
-                        <Button size="sm" asChild disabled={!product.isApproved}>
-                          {anime.isMovie === "drama" ? (
-                            <div>
-                              <Play className="w-4 h-4 lg:block hidden" />
-                              <span className="lg:hidden">Xem</span>
-                            </div>
-                          ) : (
-                            <div>
-                              <Play className="w-4 h-4 lg:block hidden" />
-                              <span className="lg:hidden">Xem</span>
-                            </div>
-                          )}
-                        </Button>
-                      </div>
-                    </MVLink>
-                  ))
-                : null}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-7 gap-4 pr-1 max-h-[300px] overflow-y-auto">
-              {anime.products && anime.products.length > 0
-                ? anime.products.map((product, index) => (
-                    <MVLink
-                      key={index}
-                      href={
-                        anime.isMovie === "drama"
-                          ? `${ANIME_PATHS.WATCH}/${product.slug}`
-                          : `${ANIME_PATHS.WATCH}/${anime.slug}`
+              {isCompactEpisodes ? (
+                <div className="relative">
+                  <div 
+                    className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-[300px] overflow-y-auto pr-2 episode-scrollbar"
+                    onScroll={(e) => {
+                      const target = e.target as HTMLDivElement;
+                      const scrollTop = target.scrollTop;
+                      const scrollHeight = target.scrollHeight;
+                      const clientHeight = target.clientHeight;
+                      const scrollPercent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+                      const progressBar = target.parentElement?.querySelector('.episode-progress-fill') as HTMLElement;
+                      if (progressBar) {
+                        progressBar.style.height = `${scrollPercent}%`;
                       }
-                      className="group block"
-                    >
-                      <div className="relative rounded-md overflow-hidden border">
-                        <div className="h-[100px] w-[200px] mx-auto bg-muted">
-                          <div className="relative h-full w-full">
+                    }}
+                  >
+                  {anime.products && anime.products.length > 0
+                    ? anime.products.map((product, index) => (
+                      <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`} key={index}>
+                        <div className="group relative flex flex-col items-center justify-center p-2 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 dark:hover:bg-accent/30 transition-all duration-200 min-h-[60px]">
+                          {/* Episode Title */}
+                          <div className="text-center">
+                            <h3 className="text-sm font-semibold text-foreground leading-tight">
+                              {anime.isMovie !== "drama" ? "Full" : product.seri}
+                            </h3>
+                          </div>
+
+                          {/* Play Button - Only show on hover */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/80 dark:bg-background/70 rounded-lg">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground">
+                              <Play className="w-3 h-3" />
+                            </div>
+                          </div>
+
+                        </div>
+                      </MVLink>
+                    ))
+                    : null}
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="episode-progress-bar"></div>
+                  <div className="episode-progress-fill"></div>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div 
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pr-1 max-h-[300px] overflow-y-auto episode-scrollbar"
+                    onScroll={(e) => {
+                      const target = e.target as HTMLDivElement;
+                      const scrollTop = target.scrollTop;
+                      const scrollHeight = target.scrollHeight;
+                      const clientHeight = target.clientHeight;
+                      const scrollPercent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+                      const progressBar = target.parentElement?.querySelector('.episode-progress-fill') as HTMLElement;
+                      if (progressBar) {
+                        progressBar.style.height = `${scrollPercent}%`;
+                      }
+                    }}
+                  >
+                  {anime.products && anime.products.length > 0
+                    ? anime.products.map((product, index) => (
+                      <MVLink
+                        key={index}
+                        href={
+                          anime.isMovie === "drama"
+                            ? `${ANIME_PATHS.WATCH}/${product.slug}`
+                            : `${ANIME_PATHS.WATCH}/${anime.slug}`
+                        }
+                        className="group block"
+                      >
+                        <div className="relative rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 bg-card dark:bg-card">
+                          <div className="aspect-video bg-muted dark:bg-muted/50 relative">
                             <MVImage
                               src={product.thumnail ? product.thumnail : "/images/placeholder_.jpg"}
                               alt={`Tập ${product.seri} - ${anime.name}`}
                               fill
-                              sizes="200px"
-                              className="object-cover group-hover:brightness-75 transition-all duration-300"
-                              priority={index < 4}
+                              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                              className="object-cover group-hover:scale-105 transition-all duration-300"
+                              priority={index < 6}
                             />
 
                             {/* Play Button Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <div className="bg-black/60 rounded-full p-3 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z" />
-                                </svg>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 dark:bg-black/50">
+                              <div className="bg-primary/90 dark:bg-primary rounded-full p-2 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                <Play className="w-4 h-4 text-primary-foreground" />
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        {anime.isMovie !== "drama" ? (
-                          <h3 className="text-sm font-medium">Full</h3>
-                        ) : (
-                          <h3 className="text-sm font-medium">Tập {product.seri}</h3>
-                        )}
-                      </div>
-                    </MVLink>
-                  ))
-                : null}
-            </div>
-          )}
-        </div>
 
-        {/* Episode Links Section */}
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">Link các tập phim</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Hiện link</span>
-              <Switch
-                checked={isShowEpisodeLinks}
-                onCheckedChange={setIsShowEpisodeLinks}
-                className="data-[state=checked]:bg-[#FFD875]"
-              />
-            </div>
-          </div>
-
-          {isShowEpisodeLinks && (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-              {anime.products && anime.products.length > 0 ? (
-                anime.products.map((product, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">
-                        {anime.isMovie === "drama" ? `Tập ${product.seri}` : "Full Movie"}
-                      </h3>
-                      <Badge variant="outline" className="text-xs">
-                        {product.isApproved ? "Đã duyệt" : "Chờ duyệt"}
-                      </Badge>
-                    </div>
-
-                    {/* Server Links */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">Servers có sẵn:</h4>
-
-                      {/* Thuyết minh servers */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-blue-600">Thuyết minh:</p>
-                        <div className="grid grid-cols-1 gap-2">
-                          <div className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/20 rounded border">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                Server 1
-                              </Badge>
-                              <span className="text-sm">1080p</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                                https://server1.com/watch/{product.slug}
-                              </code>
-                              <Button size="sm" variant="outline" className="h-7 px-2 bg-transparent">
-                                Copy
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/20 rounded border">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                Server 2
-                              </Badge>
-                              <span className="text-sm">720p</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                                https://server2.com/watch/{product.slug}
-                              </code>
-                              <Button size="sm" variant="outline" className="h-7 px-2 bg-transparent">
-                                Copy
-                              </Button>
+                            {/* Episode Number Badge */}
+                            <div className="absolute top-2 left-2 bg-black/70 dark:bg-black/80 text-white px-2 py-1 rounded text-xs font-medium">
+                              {anime.isMovie === "drama" ? `Tập ${product.seri}` : "Full"}
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Vietsub servers */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-green-600">Vietsub:</p>
-                        <div className="grid grid-cols-1 gap-2">
-                          <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded border">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                Server 1
-                              </Badge>
-                              <span className="text-sm">1080p</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                                https://vietsub1.com/watch/{product.slug}
-                              </code>
-                              <Button size="sm" variant="outline" className="h-7 px-2 bg-transparent">
-                                Copy
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded border">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                Server 2
-                              </Badge>
-                              <span className="text-sm">720p</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                                https://vietsub2.com/watch/{product.slug}
-                              </code>
-                              <Button size="sm" variant="outline" className="h-7 px-2 bg-transparent">
-                                Copy
-                              </Button>
-                            </div>
-                          </div>
+                        <div className="mt-2 px-1">
+                          <h3 className="text-sm font-medium text-foreground line-clamp-1">
+                            {anime.isMovie !== "drama" ? "Full Movie" : `Tập ${product.seri}`}
+                          </h3>
+                          {!product.isApproved && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Đang xử lý
+                            </p>
+                          )}
                         </div>
-                      </div>
-                    </div>
+                      </MVLink>
+                    ))
+                    : null}
                   </div>
-                ))
-              ) : (
-                <div className="text-center text-muted-foreground py-8">Chưa có tập phim nào được phát hành</div>
+                  {/* Progress Bar */}
+                  <div className="episode-progress-bar"></div>
+                  <div className="episode-progress-fill"></div>
+                </div>
               )}
             </div>
-          )}
-        </div>
+            {/* Episode Links Section */}
+            {nominatedData?.data && nominatedData.data.length > 0 && (
+              <div className="space-y-4 mb-8 mt-8">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xl font-semibold">Phần Liên Quan</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {nominatedData.data.map((category, index: number) => (
+                    <MVLink key={index} href={`${ANIME_PATHS.BASE}/${category.slug}`}>
+                      <Badge
+                        variant="outline"
+                        className="px-3 py-1.5 text-sm font-medium hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors cursor-pointer"
+                      >
+                        {category.name}
+                      </Badge>
+                    </MVLink>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        <Gallery images={anime.posters} className="mb-6" />
-        {/* Thông tin chi tiết */}
-        <div className="space-y-6 mb-8">
-          <Collapsible open={isDescriptionOpen} onOpenChange={setIsDescriptionOpen}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full mb-3 transition-colors">
-              <h2 className="text-xl font-semibold">Nội dung</h2>
-              {isDescriptionOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2">
-              <p className="text-muted-foreground leading-relaxed">{anime.des}</p>
-            </CollapsibleContent>
-          </Collapsible>
-          <Separator />
-        </div>
-        {/* Bình luận */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold mb-3">Bình luận</h2>
+            <Gallery images={anime.posters} className="mb-6" />
+            {/* Thông tin chi tiết */}
+            <div className="space-y-6 mb-8">
+              <Collapsible open={isDescriptionOpen} onOpenChange={setIsDescriptionOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full mb-3 transition-colors">
+                  <h2 className="text-xl font-semibold">Nội dung</h2>
+                  {isDescriptionOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2">
+                  <p className="text-muted-foreground leading-relaxed">{anime.des}</p>
+                </CollapsibleContent>
+              </Collapsible>
+              <Separator />
+            </div>
+            {/* Bình luận */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold mb-3">Bình luận</h2>
 
-          {/* Comment Form */}
-          <div className="p-4 rounded-lg border mb-6">
-            <h3 className="font-medium mb-2">Thêm bình luận</h3>
-            <textarea
-              className="w-full p-2 border rounded-md mb-2 min-h-[100px]"
-              placeholder="Viết bình luận của bạn..."
-            />
-            <div className="flex justify-end">
-              <Button>Đăng bình luận</Button>
+              {/* Comment Form */}
+              <div className="p-4 rounded-lg border mb-6">
+                <h3 className="font-medium mb-2">Thêm bình luận</h3>
+                <textarea
+                  className="w-full p-2 border rounded-md mb-2 min-h-[100px]"
+                  placeholder="Viết bình luận của bạn..."
+                />
+                <div className="flex justify-end">
+                  <Button>Đăng bình luận</Button>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="text-center text-muted-foreground py-8">
+                  Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <div className="text-center text-muted-foreground py-8">
-              Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
-            </div>
+          <div className="lg:w-80 flex-shrink-0">
+            <NominatedFilmSidebar />
           </div>
         </div>
+
       </Wrapper>
     </>
   )

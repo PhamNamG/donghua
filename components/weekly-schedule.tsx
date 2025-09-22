@@ -13,10 +13,20 @@ import { ANIME_PATHS } from "@/constant/path.constant"
 
 const DAYS = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]
 
-export function WeeklySchedulePreview() {
+interface WeeklySchedulePreviewProps {
+	maxItems?: number
+	showAllDays?: boolean
+	compact?: boolean
+}
+
+export function WeeklySchedulePreview({ 
+	maxItems = 6, 
+	compact = false 
+}: WeeklySchedulePreviewProps = {}) {
 	const [selectedDay, setSelectedDay] = useState("Thứ 2")
 	const { schedule, isLoading } = useSchedule(selectedDay)
 	const currentDay = new Date().toLocaleDateString("vi-VN", { weekday: "long" })
+	
 	const getTodayKey = () => {
 		const dayMap: Record<string, string> = {
 			"Thứ Hai": "Thứ 2",
@@ -42,17 +52,19 @@ export function WeeklySchedulePreview() {
 		)
 	}
 
-	return (
-		<div className="w-full mx-auto space-y-3 sm:space-y-4">
-			<div className="flex items-center justify-between mb-6">
-				<div className="flex items-center gap-2">
-					<CalendarDays className="h-6 w-6 text-primary text-blue-500" />
-					<h2 className="text-2xl font-bold">Lịch chiếu tuần này</h2>
-				</div>
-				{/* <Link href="/schedule" className="flex items-center text-sm text-primary hover:underline">
-					Xem chi tiết <ArrowRight className="ml-1 h-4 w-4" />
-				</Link> */}
-			</div>
+		return (
+			<div className="w-full mx-auto space-y-3 sm:space-y-4">
+				{!compact && (
+					<div className="flex items-center justify-between mb-6">
+						<div className="flex items-center gap-2">
+							<CalendarDays className="h-6 w-6 text-primary text-blue-500" />
+							<h2 className="text-2xl font-bold">Lịch chiếu tuần này</h2>
+						</div>
+						<MVLink href="/schedule" className="flex items-center text-sm text-primary hover:underline">
+							Xem chi tiết
+						</MVLink>
+					</div>
+				)}
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
 				<div className="flex items-center sm:gap-1">
 					<span className="text-xs sm:text-sm text-muted-foreground">Hôm nay, </span>
@@ -89,7 +101,7 @@ export function WeeklySchedulePreview() {
 							</div>
 						) : (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
-								{schedule.content.map((anime: AnimeContent) => (
+								{schedule.content.slice(0, maxItems).map((anime: AnimeContent) => (
 									<Card
 										key={anime._id}
 										className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-card/50 hover:bg-card"
@@ -155,6 +167,13 @@ export function WeeklySchedulePreview() {
 
 									</Card>
 								))}
+								{!compact && schedule.content.length > maxItems && (
+									<div className="col-span-full text-center pt-4">
+										<MVLink href="/schedule" className="text-sm text-primary hover:underline">
+											Xem thêm {schedule.content.length - maxItems} phim khác →
+										</MVLink>
+									</div>
+								)}
 							</div>
 						)}
 					</TabsContent>

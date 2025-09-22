@@ -1,0 +1,93 @@
+/* Episode list with custom progress bar */
+.episode-scrollbar {
+  position: relative;
+  scrollbar-width: none; /* Hide default scrollbar */
+  -ms-overflow-style: none; /* Hide IE scrollbar */
+}
+
+.episode-scrollbar::-webkit-scrollbar {
+  display: none; /* Hide WebKit scrollbar */
+}
+
+/* Custom progress bar */
+.episode-scrollbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.episode-scrollbar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 0%;
+  background: linear-gradient(
+    to bottom,
+    #f5f5f5, 
+    #c0c0c0,  
+    #808080
+  );
+  border-radius: 2px;
+  z-index: 11;
+  transition: height 0.1s ease-out;
+  box-shadow: 0 0 8px rgba(128, 128, 128, 0.5);
+}
+
+/* Progress bar animation on scroll */
+.episode-scrollbar:hover::after {
+  box-shadow: 0 0 12px rgba(128, 128, 128, 0.8);
+}
+
+/* Alternative: Use a wrapper for better control */
+.episode-progress-container {
+  position: relative;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.episode-progress-container::-webkit-scrollbar {
+  display: none;
+}
+
+.episode-progress-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.episode-progress-fill {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 0%;
+  background: linear-gradient(
+    to bottom,
+    #f5f5f5, 
+    #c0c0c0,  
+    #808080
+  );
+  border-radius: 2px;
+  z-index: 11;
+  transition: height 0.1s ease-out;
+  box-shadow: 0 0 8px rgba(128, 128, 128, 0.5);
+}
+
+.episode-progress-container:hover .episode-progress-fill {
+  box-shadow: 0 0 12px rgba(128, 128, 128, 0.8);
+}

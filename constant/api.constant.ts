@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     EPISODE: '/product',
     SEARCH: '/categorys/search',
     CATEGORY: '/categorys',
+    CATEGORY_NOMINATED: '/categories/nominated',
   },
   // Poster endpoints
   POSTER: {

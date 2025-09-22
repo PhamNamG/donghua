@@ -2,8 +2,6 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { AnimeClient } from "../anime-client"
 import { getAnimeData } from "@/services/anime.server";
-import { Wrapper } from "@/components/wrapper";
-import NominatedFilm from "@/app/xem-phim/_components/NominatedFilm";
 import { ANIME_PATHS } from "@/constant/path.constant";
 import { SEOOptimizer } from "@/components/seo-optimizer";
 import { formatAnimeData, validateAnimeData, safeSubstring, FormattedAnimeData } from "@/lib/data-utils";
@@ -116,15 +114,13 @@ export default async function AnimePage({ params }: { params: tParams }) {
   }
 
   const formattedData: FormattedAnimeData = formatAnimeData(animeData);
-
   return (
     <>
       <AnimeClient
         anime={formattedData}
+        seriesId={formattedData?.relatedSeasons}
+        categoryId={formattedData?._id}
       />
-      <Wrapper>
-        <NominatedFilm seriesId={formattedData?.relatedSeasons} categoryId={formattedData?._id} />
-      </Wrapper>
       <SEOOptimizer anime={formattedData} />
     </>
   )

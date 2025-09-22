@@ -6,7 +6,7 @@ import Loading from "@/app/loading"
 import MVLink from "@/components/Link"
 
 export function PopularAnime() {
-  const { data: animePopular, isLoading } = useAnimePopular();
+  const { data: animePopular, isLoading } = useAnimePopular("300", "400");
 
   if (isLoading) {
     return <Loading />

@@ -1,82 +1,81 @@
-import { AnimationCard } from "@/components/animation-card";
-import { getCategoryNominated } from "@/services/anime.server";
+'use client'
 
-interface NominatedFilmProp {
-    seriesId: string;
-    categoryId: string;
-}
+import MVImage from "@/components/ui/image";
+import MVLink from "@/components/Link";
+import { ANIME_PATHS } from "@/constant/path.constant";
+import { Anime } from "@/services/api/anime.api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAnimePopular } from "@/hooks/useAnime";
 
-interface NominatedFilmDataProp {
-    _id: string;
-    name: string;
-    anotherName: string;
-    slug: string;
-    linkImg: string;
-    des: string;
-    sumSeri: string;
-    products: []
-    type: string;
-    year: string;
-    time: string;
-    quality: string;
-    lang: string;
-    isMovie: string;
-    up: number;
-}
+export default function NominatedFilmSidebar() {
+	const { data: animePopular, isLoading: animePopularIsLoading } = useAnimePopular("150", "250");
 
-export default async function NominatedFilm({ seriesId, categoryId }: NominatedFilmProp) {
-    const data = await getCategoryNominated(seriesId, categoryId);
-    
-    if (!data?.data?.length) {
-        return null;
-    }
+	if (animePopularIsLoading) {
+		return (
+			<div className="w-full lg:w-80 bg-muted/30 rounded-lg p-4 sticky top-4">
+				<h3 className="text-lg font-semibold mb-4 text-foreground">Phim Liên Quan</h3>
+				<div className="space-y-3">
+					{Array.from({ length: 6 }).map((_, index) => (
+						<div key={index} className="flex gap-3 p-2 rounded-lg">
+							<Skeleton className="w-16 h-20 rounded-md" />
+							<div className="flex-1 space-y-2">
+								<Skeleton className="h-4 w-full" />
+								<Skeleton className="h-3 w-3/4" />
+								<Skeleton className="h-3 w-1/2" />
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		);
+	}
 
-    // Lọc bỏ các anime trùng lặp với anime chính
-    const uniqueAnimes = data.data.filter((anime: NominatedFilmDataProp, index: number, self: NominatedFilmDataProp[]) => 
-        index === self.findIndex((a) => a._id === anime._id)
-    );
-
-    // Giới hạn số lượng anime hiển thị để tránh trùng lặp quá nhiều
-    const limitedAnimes = uniqueAnimes.slice(0, 12);
-
-    return (
-        <section className="mt-12" aria-label="Phim liên quan">
-            <h2 className="text-xl font-semibold mb-6">Phim Liên Quan</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-3">
-                {limitedAnimes.map((anime: NominatedFilmDataProp) => (
-                    <AnimationCard 
-                        key={anime._id} 
-                        anime={anime}
-                        showBadge={true}
-                    />
-                ))}
-            </div>
-            {/* Thêm structured data cho danh sách phim liên quan */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "ItemList",
-                        "name": "Phim liên quan",
-                        "description": "Danh sách các phim hoạt hình liên quan",
-                        "numberOfItems": limitedAnimes.length,
-                        "itemListElement": limitedAnimes.map((anime: NominatedFilmDataProp, index: number) => ({
-                            "@type": "ListItem",
-                            "position": index + 1,
-                            "item": {
-                                "@type": "Movie",
-                                "name": anime.name,
-                                "alternateName": anime.anotherName,
-                                "image": anime.linkImg,
-                                "url": `https://hh3dtq.site/phim/${anime.slug}`,
-                                "datePublished": anime.year,
-                                "description": anime.des
-                            }
-                        }))
-                    })
-                }}
-            />
-        </section>
-    );
+	return (
+		<div className="w-full lg:w-80 bg-muted/30 rounded-lg p-4 sticky top-4">
+			<h3 className="text-lg font-semibold mb-4 text-foreground">Phim Liên Quan</h3>
+			<div className="space-y-3">
+				{animePopular?.data?.map((anime: Anime) => (
+					<MVLink
+						key={anime._id}
+						href={`${ANIME_PATHS.BASE}/${anime.slug}`}
+						className="block group"
+					>
+						<div className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+							<div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden">
+								<MVImage
+									src={anime.linkImg || "/placeholder.svg"}
+									alt={anime.name}
+									fill
+									sizes="64px"
+									className="object-cover group-hover:scale-105 transition-transform duration-200"
+								/>
+								{anime.isMovie !== "drama" && (
+									<div className="absolute top-1 right-1 bg-primary text-primary-foreground text-[8px] px-1 py-0.5 rounded">
+										Movie
+									</div>
+								)}
+							</div>
+							<div className="flex-1 min-w-0">
+								<h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+									{anime.name}
+								</h4>
+								<p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+									{anime.anotherName || anime.year}
+								</p>
+								<div className="flex items-center gap-2 mt-1">
+									<span className="text-xs text-muted-foreground">{anime.year}</span>
+									{anime.quality && anime.quality !== "undefined" && (
+										<>
+											<span className="text-xs text-muted-foreground">•</span>
+											<span className="text-xs text-muted-foreground">{anime.quality}</span>
+										</>
+									)}
+								</div>
+							</div>
+						</div>
+					</MVLink>
+				))}
+			</div>
+		</div>
+	);
 }

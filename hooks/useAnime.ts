@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { animeApi, Anime, AnimeResponse } from '@/services/api/anime.api';
+import { animeApi, Anime, AnimeResponse, AnimeResponseNominated } from '@/services/api/anime.api';
 
 export function useAnime() {
 	return useQuery<AnimeResponse>({
@@ -15,10 +15,12 @@ export function useAnimeCategory(page: number) {
 	});
 }
 
-export function useAnimePopular() {
+export function useAnimePopular(width: string, height: string) {
 	return useQuery<AnimeResponse>({
-		queryKey: ['popular'],
-		queryFn: () => animeApi.getPopular(),
+		queryKey: ['popular', width, height],
+		queryFn: () => animeApi.getPopular(width, height),
+		staleTime: 1000 * 60 * 60 * 24,
+		gcTime: 1000 * 60 * 60 * 24,
 	});
 }
 
@@ -34,5 +36,14 @@ export function useSearchAnime(query: string, filters: { categories: string[], s
 		queryKey: ['search', query, filters],
 		queryFn: () => animeApi.search(query, filters),
 		enabled: query.length > 0,
+	});
+}
+
+export function useCategoryNominated(seriesId: string, categoryId: string) {
+	return useQuery<AnimeResponseNominated>({
+		queryKey: ['categoryNominated', seriesId, categoryId],
+		queryFn: () => animeApi.getCategoryNominated(seriesId, categoryId),
+		staleTime: 1000 * 60 * 60 * 24,
+		gcTime: 1000 * 60 * 60 * 24,
 	});
 } 

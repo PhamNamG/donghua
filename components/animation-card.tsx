@@ -30,6 +30,7 @@ interface AnimeType {
   up: number;
   thuyetMinh?: boolean;
   newMovie?: boolean;
+  isActive: number;
 }
 
 interface AnimationCardProps {
@@ -38,6 +39,7 @@ interface AnimationCardProps {
 }
 
 export function AnimationCard({ anime, showBadge = true }: AnimationCardProps) {
+  if (!anime.isActive) return null;
   return (
     <Card className="overflow-hidden h-full transition-all hover:shadow-md group">
       <MVLink href={`${ANIME_PATHS.BASE}/${anime.slug}`} >
@@ -69,7 +71,7 @@ export function AnimationCard({ anime, showBadge = true }: AnimationCardProps) {
                   <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-white rounded-full animate-bounce opacity-80" />
                 </div>
               )}
-              
+
               {anime.products && anime.products.length > 0 && (
                 <Badge
                   variant={anime.isMovie !== "drama" && anime.isMovie !== undefined ? "default" : "secondary"}
@@ -89,7 +91,7 @@ export function AnimationCard({ anime, showBadge = true }: AnimationCardProps) {
               )}
             </div>
           )}
-          
+
           {/* Enhanced glow + floating elements cho phim mới */}
           {anime.newMovie && (
             <>
@@ -107,7 +109,7 @@ export function AnimationCard({ anime, showBadge = true }: AnimationCardProps) {
               </div>
             </>
           )}
-          
+
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 sm:p-2">
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-1 sm:gap-1.5">
