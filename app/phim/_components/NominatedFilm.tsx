@@ -1,12 +1,25 @@
 import MVImage from "@/components/ui/image";
 import MVLink from "@/components/Link";
 import { ANIME_PATHS } from "@/constant/path.constant";
-import { Anime, AnimeResponse } from "@/services/api/anime.api";
 
-export default function NominatedFilmSidebar({ topCategory }: { topCategory: AnimeResponse[] }) {
 
+export interface TopCategoryProps {
+	topCategory: {
+		data: {
+			name: string
+			slug: string
+			linkImg: string
+			isMovie: string
+			anotherName: string
+			year: string
+			quality: string
+			_id: string
+		}[]
+	}
+}
+export default function NominatedFilmSidebar({ topCategory }: TopCategoryProps) {
 	// if (animePopularIsLoading) {
-	// 	return (
+	// 	return (	
 	// 		<div className="w-full lg:w-80 bg-muted/30 rounded-lg p-4 sticky top-4">
 	// 			<h3 className="text-lg font-semibold mb-4 text-foreground">Phim Liên Quan</h3>
 	// 			<div className="space-y-3">
@@ -29,8 +42,7 @@ export default function NominatedFilmSidebar({ topCategory }: { topCategory: Ani
 		<div className="w-full lg:w-80 bg-muted/30 rounded-lg p-4 sticky top-4">
 			<h3 className="text-lg font-semibold mb-4 text-foreground">Phim Liên Quan</h3>
 			<div className="space-y-3">
-				{topCategory?.map((response: AnimeResponse) => 
-					response.data?.map((anime: Anime) => (
+				{topCategory.data.map((anime) => 
 					<MVLink
 						key={anime._id}
 						href={`${ANIME_PATHS.BASE}/${anime.slug}`}
@@ -70,8 +82,7 @@ export default function NominatedFilmSidebar({ topCategory }: { topCategory: Ani
 							</div>
 						</div>
 					</MVLink>
-					))
-				).flat()}
+					)}
 			</div>
 		</div>
 	);

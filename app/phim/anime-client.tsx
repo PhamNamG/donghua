@@ -27,9 +27,8 @@ import { SOCIAL_LINKS } from "@/constant/social.constant"
 import { useWatchlistStore } from "@/store/watchlist"
 import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
-import NominatedFilmSidebar from "./_components/NominatedFilm"
+import NominatedFilmSidebar, { TopCategoryProps } from "./_components/NominatedFilm"
 import "./style.css"
-import { AnimeResponse } from "@/services/api/anime.api"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -46,7 +45,7 @@ interface AnimeClientProps {
       slug: string
     }[]
   }
-  topCategory: AnimeResponse[]
+  topCategory: TopCategoryProps['topCategory']
 }
 
 export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientProps) {
@@ -99,7 +98,6 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
       statusLower === "ongoing" ||
       totalEpisodes === 0 ||
       currentEpisodes < totalEpisodes)
-
   return (
     <>
       {/* Header with background image - Full width */}

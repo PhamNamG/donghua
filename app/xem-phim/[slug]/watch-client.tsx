@@ -18,11 +18,10 @@ import { ANIME_PATHS } from "@/constant/path.constant";
 import { SOCIAL_LINKS } from "@/constant/social.constant";
 import { useHistoryStore } from "@/store/history";
 import { Switch } from "@/components/ui/switch";
-import NominatedFilmSidebar from "@/app/phim/_components/NominatedFilm";
+import NominatedFilmSidebar, { TopCategoryProps } from "@/app/phim/_components/NominatedFilm";
 import "./style.css";
 import { SwitchEpisode } from "../components/switch-episode";
 import { EpisodeDescriptions } from "../components/episode-descriptions";
-import { AnimeResponse } from "@/services/api/anime.api";
 
 interface Product {
   _id: string;
@@ -86,7 +85,7 @@ export interface Anime {
 }
 
 
-export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory: AnimeResponse[] }) {
+export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory: TopCategoryProps['topCategory'] }) {
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true);
   const addToHistory = useHistoryStore((state) => state.addToHistory);
   const desktopEpisodeListRef = useRef<HTMLDivElement>(null);
