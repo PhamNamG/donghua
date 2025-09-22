@@ -1,0 +1,27 @@
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3) !important;
+  border-radius: 10px !important;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #b0b0b0;
+  border-radius: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    #606060
+  ) !important;
+}
+
+.scrollbar-custom::-webkit-scrollbar-corner {
+  background: hsl(var(--muted) / 0.3) !important;
+  border-radius: 10px !important;
+}

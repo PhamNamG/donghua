@@ -1,5 +1,3 @@
-'use client'
-
 import MVImage from "@/components/ui/image";
 import MVLink from "@/components/Link";
 import { ANIME_PATHS } from "@/constant/path.constant";

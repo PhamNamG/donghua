@@ -78,6 +78,22 @@ export async function getCategoryNominated(seriesId: string, categoryId: string)
     }
 }
 
+export async function getAnimePopular(width: string, height: string) {
+    try {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ANIME_POPULAR}?width=${width}&height=${height}`, {
+            method: "GET",
+        });
+        if (!response.ok) {
+            notFound();
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching anime popular:', error);
+        return { data: [], error: ERROR_MESSAGES.FETCH_FAILED };
+    }
+}
+
 export async function fetchCategorySitemap() {
     try {
       const response = await fetch(

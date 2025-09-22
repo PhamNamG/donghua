@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   CATEGORIES_NOMINATED: '/categories/nominated',
   CATEGORY_SITEMAP: '/categorys/sitemap',
   POSTER: '/poster',
+  ANIME_POPULAR: '/category/filters',
 } as const;
 
 // Cache Settings

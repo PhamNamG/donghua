@@ -27,9 +27,9 @@ import { SOCIAL_LINKS } from "@/constant/social.constant"
 import { useWatchlistStore } from "@/store/watchlist"
 import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
-import NominatedFilmSidebar from "../xem-phim/_components/NominatedFilm"
 import { useCategoryNominated } from "@/hooks/useAnime"
 import "./style.css"
+import NominatedFilmSidebar from "./_components/NominatedFilm"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -196,9 +196,9 @@ export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
                   )}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={handleWatchlistClick}
-                  className="flex-1 md:flex-none text-xs md:text-sm px-2 md:px-4 bg-transparent"
+                  className="flex-1 md:flex-none text-xs md:text-sm px-2 md:px-4 "
                 >
                   {isInList ? <Bookmark className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
                   <span className="hidden sm:inline">{isInList ? "Xóa khỏi danh sách" : "Thêm vào danh sách"}</span>
@@ -207,7 +207,7 @@ export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
                 <Button
                   variant="outline"
                   asChild
-                  className="cursor-pointer flex-1 md:flex-none text-xs md:text-sm px-2 md:px-4 bg-transparent"
+                  className="cursor-pointer flex-1 md:flex-none text-xs md:text-sm px-2 md:px-4 "
                 >
                   <a
                     href={SOCIAL_LINKS.ZALO}
@@ -338,10 +338,6 @@ export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
                               </div>
                             </div>
 
-                            {/* Episode Number Badge */}
-                            <div className="absolute top-2 left-2 bg-black/70 dark:bg-black/80 text-white px-2 py-1 rounded text-xs font-medium">
-                              {anime.isMovie === "drama" ? `Tập ${product.seri}` : "Full"}
-                            </div>
                           </div>
                         </div>
 
@@ -349,11 +345,7 @@ export function AnimeClient({ anime, seriesId, categoryId }: AnimeClientProps) {
                           <h3 className="text-sm font-medium text-foreground line-clamp-1">
                             {anime.isMovie !== "drama" ? "Full Movie" : `Tập ${product.seri}`}
                           </h3>
-                          {!product.isApproved && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Đang xử lý
-                            </p>
-                          )}
+                         
                         </div>
                       </MVLink>
                     ))
