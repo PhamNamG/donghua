@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "vi_VN",
     url: process.env.NEXT_PUBLIC_SITE_URL || 'https://hh3dtq.site',
-    siteName: "Hoạt hình trung quốc",
-    title: "Hoạt hình trung quốc - Xem phim hoạt hình trung quốc mới nhất",
+    siteName: "Hoạt hình trung quốc thuyết minh",
+    title: "Hoạt hình trung quốc thuyết minh - Xem phim hoạt hình trung quốc mới nhất",
     description:
       "Xem phim hoạt hình trung quốc mới nhất, chất lượng cao, cập nhật nhanh chóng. Thưởng thức các bộ phim hoạt hình trung quốc hay nhất với phụ đề tiếng Việt.",
     images: [
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
         url: "https://res.cloudinary.com/daz3lejjo/image/upload/f_webp/v1732691384/hoa-giang-ho-chi-bat-luong-nhan-phan-6-2-1_qkxcfi.jpg",
         width: 1200,
         height: 630,
-        alt: "Hoạt hình trung quốc",
+        alt: "Hoạt hình trung quốc thuyết minh",
       },
     ],
   },

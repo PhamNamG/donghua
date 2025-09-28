@@ -340,10 +340,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             {isLoading ? (
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
-                <p>Loading video...</p>
+                <p>Đang tải video...</p>
               </div>
             ) : (
-              "No video source available"
+              "Đang cập nhật video..."
             )}
           </div>
         )}

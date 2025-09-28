@@ -322,6 +322,7 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
                 </Tabs>
               </div>
               <NominatedFilmSidebar topCategory={topCategory} />
+
             </div>
           </div>
         </div>

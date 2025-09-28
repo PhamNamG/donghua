@@ -111,7 +111,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
             priority
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background md:via-background/50 via-background/0 to-transparent h-[500px] md:h-[400px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background md:via-background/20 via-background/0 to-transparent h-[500px] md:h-[400px]" />
         <div className="container relative h-[520px] md:h-[400px] flex flex-col justify-end pb-8 mx-auto">
           <MVLink href="/" className="absolute top-4 left-3 md:left-0 md:top-8">
             <Button variant="outline" size="sm" className="gap-1 bg-background/80 backdrop-blur-sm cursor-pointer">

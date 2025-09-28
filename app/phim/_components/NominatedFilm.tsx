@@ -39,7 +39,7 @@ export default function NominatedFilmSidebar({ topCategory }: TopCategoryProps) 
 	// }
 
 	return (
-		<div className="w-full lg:w-80 bg-muted/30 rounded-lg p-4 sticky top-4">
+		<div className="w-full bg-muted/30 rounded-lg p-4 sticky top-4">
 			<h3 className="text-lg font-semibold mb-4 text-foreground">Phim Liên Quan</h3>
 			<div className="space-y-3">
 				{topCategory.data.map((anime) => 
