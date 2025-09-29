@@ -97,12 +97,13 @@ export async function fetchCategorySitemap() {
         `${API_BASE_URL}${API_ENDPOINTS.CATEGORY_SITEMAP}`,
         {
           method: "GET",
-          cache: CACHE_SETTINGS.NO_CACHE,
+          next: { revalidate: 3600 }, // Cache for 1 hour
           signal: AbortSignal.timeout(TIMEOUT.DEFAULT)
         }
       );
       if (!response.ok) {
-        notFound();
+        console.error(`Failed to fetch category sitemap: ${response.status} ${response.statusText}`);
+        return { data: [], error: 'Failed to fetch sitemap data' };
       }
       const data = await response.json();
       return data;

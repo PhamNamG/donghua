@@ -45,7 +45,7 @@ export const metadata: Metadata = {
         url: "https://res.cloudinary.com/daz3lejjo/image/upload/f_webp/v1732691384/hoa-giang-ho-chi-bat-luong-nhan-phan-6-2-1_qkxcfi.jpg",
         width: 1200,
         height: 630,
-        alt: "Hoạt hình trung quốc thuyết minh",
+        alt: "Hoạt hình trung quốc",
       },
     ],
   },

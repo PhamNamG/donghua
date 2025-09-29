@@ -38,10 +38,7 @@ export const AUTH_PATHS = {
 
 // Other Paths
 export const OTHER_PATHS = {
-  HOME: '/',
-  ABOUT: '/about',
-  CONTACT: '/contact',
-  HELP: '/help',
-  TERMS: '/terms',
-  PRIVACY: '/privacy',
+  ABOUT: '/phim/tien-nghich',
+  CONTACT: '/phim/kiem-lai',
+  HELP: '/phim/tru-tien',
 } as const; 
