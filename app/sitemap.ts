@@ -68,3 +68,7 @@ export default async function sitemap() {
 
   return urls;
 }
+
+// Force sitemap to always return 200 status and prevent 304 responses
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
