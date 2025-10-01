@@ -8,8 +8,21 @@ interface SEOOptimizerProps {
 }
 
 export function SEOOptimizer({ anime }: SEOOptimizerProps) {
-  const baseUrl = 'https://hh3dtq.site';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   
+  // Normalize rating value to 1-10 scale based on likes
+  // Using proper scaling: convert likes to a 1-10 rating scale
+  const calculateRating = (likes: number): number => {
+    if (likes <= 0) return 1;
+    if (likes <= 10) return Math.max(1, Math.min(10, likes));
+    // For likes > 10, use logarithmic scale to map to 1-10
+    const rating = 1 + (Math.log10(likes) / Math.log10(1000)) * 9;
+    return Math.min(10, Math.max(1, parseFloat(rating.toFixed(1))));
+  };
+  
+  const normalizedRating = calculateRating(anime.up || 0);
+  // Ensure ratingCount is reasonable (at least 10% of likes, minimum 1)
+  const ratingCount = anime.ratingCount || Math.max(1, Math.floor((anime.up || 0) / 10) || 1);
   // Tối ưu hóa structured data để tránh trùng lặp
   const movieSchema = {
     "@context": "https://schema.org",
@@ -31,8 +44,8 @@ export function SEOOptimizer({ anime }: SEOOptimizerProps) {
     },
     "aggregateRating": {
       "@type": "AggregateRating",
-      "ratingValue": anime.up,
-      "ratingCount": anime.ratingCount || 1,
+      "ratingValue": normalizedRating,
+      "ratingCount": ratingCount,
       "bestRating": 10,
       "worstRating": 1,
     },
