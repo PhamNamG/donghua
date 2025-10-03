@@ -60,16 +60,16 @@ export function truncateDescription(description: string, maxLength: number = 200
 }
 
 export function generateCanonicalUrl(slug: string): string {
-    return `https://hh3dtq.site/phim/${slug}`;
+    return `${process.env.NEXT_PUBLIC_SITE_URL}/phim/${slug}`;
 }
 
 export function generateOpenGraphUrl(slug: string): string {
-    return `https://hh3dtq.site/phim/${slug}`;
+    return `${process.env.NEXT_PUBLIC_SITE_URL}/phim/${slug}`;
 }
 
 // Structured Data Helpers
 export function generateMovieSchema(anime:Anime, slug: string) {
-    const baseUrl = 'https://hh3dtq.site';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     return {
         "@context": "https://schema.org",
@@ -119,7 +119,7 @@ export function generateBreadcrumbSchema(anime: {
         }
     ]
 }, slug: string) {
-    const baseUrl = 'https://hh3dtq.site';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     return {
         "@context": "https://schema.org",

@@ -95,7 +95,7 @@ export function SEOOptimizer({ anime }: SEOOptimizerProps) {
     "url": baseUrl,
     "logo": `${baseUrl}/images/logo.png`,
     "sameAs": [
-      "https://hh3dtq.site"
+      `${baseUrl}`
     ]
   };
 

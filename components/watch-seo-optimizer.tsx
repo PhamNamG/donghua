@@ -40,7 +40,7 @@ interface WatchSEOOptimizerProps {
 }
 
 export function WatchSEOOptimizer({ anime }: WatchSEOOptimizerProps) {
-  const baseUrl = 'https://hh3dtq.site';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   
   // Tối ưu hóa structured data cho video
   const videoSchema = {
@@ -137,7 +137,7 @@ export function WatchSEOOptimizer({ anime }: WatchSEOOptimizerProps) {
     "url": baseUrl,
     "logo": `${baseUrl}/images/logo.png`,
     "sameAs": [
-      "https://hh3dtq.site"
+      `${baseUrl}`
     ]
   };
 

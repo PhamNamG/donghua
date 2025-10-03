@@ -77,7 +77,7 @@ export async function generateMetadata(
       description,
       type: 'video.movie',
       siteName: 'Hoạt hình trung quốc',
-      url: `https://hh3dtq.site/xem-phim/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/xem-phim/${slug}`,
       locale: "vi_VN",
       images: [{
         url: animeData.category.linkImg || '/og-image.jpg',
@@ -91,11 +91,11 @@ export async function generateMetadata(
       title,
       description,
       images: [animeData.category.linkImg || '/og-image.jpg'],
-      site: "https://hh3dtq.site",
-      creator: "https://hh3dtq.site",
+      site: `${process.env.NEXT_PUBLIC_SITE_URL}`,
+      creator: `${process.env.NEXT_PUBLIC_SITE_URL}`,
     },
     alternates: {
-      canonical: `https://hh3dtq.site${ANIME_PATHS.WATCH}/${slug}`
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}${ANIME_PATHS.WATCH}/${slug}`
     },
     other: {
       'article:author': 'Hoạt hình trung quốc',

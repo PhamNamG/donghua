@@ -83,7 +83,7 @@ export async function generateMetadata(
       }],
       type: 'video.movie',
       siteName: "Hoạt hình trung quốc",
-      url: `https://hh3dtq.site/phim/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/phim/${slug}`,
       locale: "vi_VN",
     },
     twitter: {
@@ -91,11 +91,11 @@ export async function generateMetadata(
       title,
       description,
       images: [imageUrl],
-      site: "https://hh3dtq.site",
-      creator: "https://hh3dtq.site",
+      site: `${process.env.NEXT_PUBLIC_SITE_URL}`,
+      creator: `${process.env.NEXT_PUBLIC_SITE_URL}`,
     },
     alternates: {
-      canonical: `https://hh3dtq.site${ANIME_PATHS.DETAIL(slug)}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}${ANIME_PATHS.DETAIL(slug)}`,
     },
     other: {
       'article:author': 'Hoạt hình trung quốc',
