@@ -8,6 +8,12 @@ export function useAnime() {
 	});
 }
 
+export function useAnimeEp2d() {
+	return useQuery<AnimeResponse>({
+		queryKey: ['animeEp2d'],
+		queryFn: () => animeApi.getEp2d(),
+	});
+}
 export function useAnimeCategory(page: number) {
 	return useQuery<AnimeResponse>({
 		queryKey: ['category', page],

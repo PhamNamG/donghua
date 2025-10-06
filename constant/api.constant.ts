@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     SEARCH: '/categorys/search',
     CATEGORY: '/categorys',
     CATEGORY_NOMINATED: '/categories/nominated',
+    EP2D: '/v1/category/2d',
   },
   // Poster endpoints
   POSTER: {

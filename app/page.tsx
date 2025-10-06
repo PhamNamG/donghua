@@ -3,6 +3,7 @@ import { Suspense, lazy, useState, useEffect, useRef, RefObject } from 'react'
 import { FeaturedSlider } from "@/components/featured-slider"
 import { Wrapper } from "@/components/wrapper"
 import { WeeklySchedulePreview } from '@/components/weekly-schedule';
+import { Ep2d } from '@/components/ep-2d';
 interface LazySectionProps {
   children: React.ReactNode;
   fallback: React.ReactNode;
@@ -95,6 +96,13 @@ export default function HomePage() {
           className="mb-8"
         >
           <NewReleases />
+        </LazySection>
+
+        <LazySection
+          fallback={<SectionSkeleton />}
+          className="mb-8"
+        >
+          <Ep2d />
         </LazySection>
 
         <LazySection

@@ -59,6 +59,10 @@ export const animeApi = {
         return baseApi.get<AnimeResponse>(API_ENDPOINTS.ANIME.LATEST);
     },
 
+    getEp2d: async (): Promise<AnimeResponse> => {
+        return baseApi.get<AnimeResponse>(API_ENDPOINTS.ANIME.EP2D);
+    },
+
     getPopular: async (width: string, height: string): Promise<AnimeResponse> => {
         return baseApi.get<AnimeResponse>(`${API_ENDPOINTS.ANIME.POPULAR}?width=${width}&height=${height}`);
     },
