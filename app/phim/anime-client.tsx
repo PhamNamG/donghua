@@ -55,8 +55,8 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
   const isInList = isInWatchlist(anime._id)
   const handleWatchlistClick = () => {
     if (isInList) {
-        removeAnime(anime._id)
-      } else {
+      removeAnime(anime._id)
+    } else {
       addAnime({
         _id: anime._id,
         name: anime.name,
@@ -240,7 +240,10 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
           {/* Main content - Episode List */}
           <div>
             <div className="flex-1 space-y-4">
+
               <div className="flex items-center justify-between mb-3">
+
+
                 <h2 className="text-xl font-semibold">Danh sách tập</h2>
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Rút gọn</span>
@@ -254,7 +257,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
 
               {isCompactEpisodes ? (
                 <div className="relative">
-                  <div 
+                  <div
                     className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-[300px] overflow-y-auto pr-2 episode-scrollbar"
                     onScroll={(e) => {
                       const target = e.target as HTMLDivElement;
@@ -268,28 +271,28 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                       }
                     }}
                   >
-                  {anime.products && anime.products.length > 0
-                    ? anime.products.map((product, index) => (
-                      <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`} key={index}>
-                        <div className="group relative flex flex-col items-center justify-center p-2 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 dark:hover:bg-accent/30 transition-all duration-200 min-h-[60px]">
-                          {/* Episode Title */}
-                          <div className="text-center">
-                            <h3 className="text-sm font-semibold text-foreground leading-tight">
-                              {anime.isMovie !== "drama" ? "Full" : product.seri}
-                            </h3>
-                          </div>
-
-                          {/* Play Button - Only show on hover */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/80 dark:bg-background/70 rounded-lg">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground">
-                              <Play className="w-3 h-3" />
+                    {anime.products && anime.products.length > 0
+                      ? anime.products.map((product, index) => (
+                        <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`} key={index}>
+                          <div className="group relative flex flex-col items-center justify-center p-2 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 dark:hover:bg-accent/30 transition-all duration-200 min-h-[60px]">
+                            {/* Episode Title */}
+                            <div className="text-center">
+                              <h3 className="text-sm font-semibold text-foreground leading-tight">
+                                {anime.isMovie !== "drama" ? "Full" : product.seri}
+                              </h3>
                             </div>
-                          </div>
 
-                        </div>
-                      </MVLink>
-                    ))
-                    : null}
+                            {/* Play Button - Only show on hover */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/80 dark:bg-background/70 rounded-lg">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground">
+                                <Play className="w-3 h-3" />
+                              </div>
+                            </div>
+
+                          </div>
+                        </MVLink>
+                      ))
+                      : null}
                   </div>
                   {/* Progress Bar */}
                   <div className="episode-progress-bar"></div>
@@ -297,7 +300,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                 </div>
               ) : (
                 <div className="relative">
-                  <div 
+                  <div
                     className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pr-1 max-h-[300px] overflow-y-auto episode-scrollbar"
                     onScroll={(e) => {
                       const target = e.target as HTMLDivElement;
@@ -311,47 +314,47 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                       }
                     }}
                   >
-                  {anime.products && anime.products.length > 0
-                    ? anime.products.map((product, index) => (
-                      <MVLink
-                        key={index}
-                        href={
-                          anime.isMovie === "drama"
-                            ? `${ANIME_PATHS.WATCH}/${product.slug}`
-                            : `${ANIME_PATHS.WATCH}/${anime.slug}`
-                        }
-                        className="group block"
-                      >
-                        <div className="relative rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 bg-card dark:bg-card">
-                          <div className="aspect-video bg-muted dark:bg-muted/50 relative">
-                            <MVImage
-                              src={product.thumnail ? product.thumnail : "/images/placeholder_.jpg"}
-                              alt={`Tập ${product.seri} - ${anime.name}`}
-                              fill
-                              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                              className="object-cover group-hover:scale-105 transition-all duration-300"
-                              priority={index < 6}
-                            />
+                    {anime.products && anime.products.length > 0
+                      ? anime.products.map((product, index) => (
+                        <MVLink
+                          key={index}
+                          href={
+                            anime.isMovie === "drama"
+                              ? `${ANIME_PATHS.WATCH}/${product.slug}`
+                              : `${ANIME_PATHS.WATCH}/${anime.slug}`
+                          }
+                          className="group block"
+                        >
+                          <div className="relative rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 bg-card dark:bg-card">
+                            <div className="aspect-video bg-muted dark:bg-muted/50 relative">
+                              <MVImage
+                                src={product.thumnail ? product.thumnail : "/images/placeholder_.jpg"}
+                                alt={`Tập ${product.seri} - ${anime.name}`}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                                className="object-cover group-hover:scale-105 transition-all duration-300"
+                                priority={index < 6}
+                              />
 
-                            {/* Play Button Overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 dark:bg-black/50">
-                              <div className="bg-primary/90 dark:bg-primary rounded-full p-2 transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                                <Play className="w-4 h-4 text-primary-foreground" />
+                              {/* Play Button Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 dark:bg-black/50">
+                                <div className="bg-primary/90 dark:bg-primary rounded-full p-2 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                  <Play className="w-4 h-4 text-primary-foreground" />
+                                </div>
                               </div>
+
                             </div>
+                          </div>
+
+                          <div className="mt-2 px-1">
+                            <h3 className="text-sm font-medium text-foreground line-clamp-1">
+                              {anime.isMovie !== "drama" ? "Full Movie" : `Tập ${product.seri}`}
+                            </h3>
 
                           </div>
-                        </div>
-
-                        <div className="mt-2 px-1">
-                          <h3 className="text-sm font-medium text-foreground line-clamp-1">
-                            {anime.isMovie !== "drama" ? "Full Movie" : `Tập ${product.seri}`}
-                          </h3>
-                         
-                        </div>
-                      </MVLink>
-                    ))
-                    : null}
+                        </MVLink>
+                      ))
+                      : null}
                   </div>
                   {/* Progress Bar */}
                   <div className="episode-progress-bar"></div>
@@ -382,7 +385,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
 
             <Gallery images={anime.posters} className="mb-6" />
             {/* Thông tin chi tiết */}
-            <div className="space-y-6 mb-8">
+            <div className="space-y-6 mb-8 mt-3">
               <Collapsible open={isDescriptionOpen} onOpenChange={setIsDescriptionOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full mb-3 transition-colors">
                   <h2 className="text-xl font-semibold">Nội dung</h2>
