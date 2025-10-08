@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, Clock } from "lucide-react";
+import { BackupLinks } from "@/components/backup-links";
 
 interface EpisodeInfoProps {
   name: string;
@@ -42,8 +43,9 @@ export function EpisodeInfo({
           <Clock className="h-4 w-4" />
           <span>{time}</span>
         </div>
+        <BackupLinks />
       </div>
-      
+
     </div>
   );
 }

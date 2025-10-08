@@ -29,6 +29,7 @@ import type { FormattedAnimeData } from "@/lib/data-utils"
 import Gallery from "./gallery"
 import NominatedFilmSidebar, { TopCategoryProps } from "./_components/NominatedFilm"
 import "./style.css"
+import { BackupLinks } from "@/components/backup-links"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -156,8 +157,8 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                   </div>
                 ))}
               </div>
-              {isAiring ? (
-                <div className="mb-4 justify-center md:justify-start">
+              <div className="flex flex-wrap items-center gap-2 justify-center md:justify-start mb-5">
+                {isAiring ? (
                   <div className="relative group inline-flex">
                     {/* Glow effect */}
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
@@ -170,15 +171,15 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                       <div className="ml-2 w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse" />
                     </div>
                   </div>
-                </div>
-              ) : isCompleted ? (
-                <div className="mb-4 justify-center md:justify-start">
+                ) : isCompleted ? (
                   <div className="relative bg-white/5 dark:bg-white/5 border border-white/70 rounded-lg px-3 py-2 inline-flex items-center gap-2">
                     <span className="text-sm font-medium text-white">Hoàn Thành</span>
                     <span className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+                <BackupLinks />
+              </div>
+
 
               {/* 3 buttons in one row on all screen sizes */}
               <div className="flex flex-row gap-2 md:gap-3 md:justify-start justify-center w-full px-2 md:px-0">
@@ -242,7 +243,6 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
             <div className="flex-1 space-y-4">
 
               <div className="flex items-center justify-between mb-3">
-
 
                 <h2 className="text-xl font-semibold">Danh sách tập</h2>
                 <div className="flex items-center gap-2">
