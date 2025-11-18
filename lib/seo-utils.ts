@@ -43,7 +43,9 @@ export function generateKeywords(
         ...(tags?.map(tag => `${tag.name} anime`) || []),
         "hoạt hình trung quốc online",
         "anime vietsub",
-        "phim hoạt hình mới"
+        "phim hoạt hình mới",
+        "ổ 3d",
+        'o3d',
     ];
 
     return baseKeywords.filter((keyword, index, self) =>
@@ -68,7 +70,7 @@ export function generateOpenGraphUrl(slug: string): string {
 }
 
 // Structured Data Helpers
-export function generateMovieSchema(anime:Anime, slug: string) {
+export function generateMovieSchema(anime: Anime, slug: string) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     return {

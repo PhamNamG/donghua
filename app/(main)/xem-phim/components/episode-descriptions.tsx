@@ -1,4 +1,4 @@
-import { Anime } from "@/app/xem-phim/[slug]/watch-client";
+import { Anime } from "@/app/(main)/xem-phim/[slug]/watch-client";
 import { Badge } from "@/components/ui/badge";
 
 

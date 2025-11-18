@@ -7,10 +7,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EpisodeList } from "@/app/xem-phim/components/episode-list";
-import { EpisodeInfo } from "@/app/xem-phim/components/episode-info";
-import { EpisodeNavigation } from "@/app/xem-phim/components/episode-navigation";
-import { CommentsSection } from "@/app/xem-phim/components/comments-section";
+import { EpisodeList } from "@/app/(main)/xem-phim/components/episode-list";
+import { EpisodeInfo } from "@/app/(main)/xem-phim/components/episode-info";
+import { EpisodeNavigation } from "@/app/(main)/xem-phim/components/episode-navigation";
+import { CommentsSection } from "@/app/(main)/xem-phim/components/comments-section";
 import { VideoPlayer } from "@/components/video-player";
 import { Wrapper } from "@/components/wrapper";
 import MVLink from "@/components/Link";
@@ -18,10 +18,11 @@ import { ANIME_PATHS } from "@/constant/path.constant";
 import { SOCIAL_LINKS } from "@/constant/social.constant";
 import { useHistoryStore } from "@/store/history";
 import { Switch } from "@/components/ui/switch";
-import NominatedFilmSidebar, { TopCategoryProps } from "@/app/phim/_components/NominatedFilm";
+import NominatedFilmSidebar, { TopCategoryProps } from "@/app/(main)/phim/_components/NominatedFilm";
 import "./style.css";
 import { SwitchEpisode } from "../components/switch-episode";
 import { EpisodeDescriptions } from "../components/episode-descriptions";
+import { SearchEpisode } from "../../_components/SearchEpisode";
 
 interface Product {
   _id: string;
@@ -93,7 +94,7 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
   const currentEpisodeRef = useRef<HTMLDivElement>(null);
   const currentMobileEpisodeRef = useRef<HTMLDivElement>(null);
   const [combiningEpisodes, setCombiningEpisodes] = useState<CombiningEpisode | null>(null);
-
+  const [searchEpisode, setSearchEpisode] = useState('');
 
   // Thêm useEffect để cập nhật lịch sử xem
   useEffect(() => {
@@ -188,18 +189,23 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
                     prevEpisode={anime.prevEpisode}
                     nextEpisode={anime.nextEpisode}
                   />
-
+                  <div className="my-3 w-[200px]">
+                    <SearchEpisode searchEpisode={searchEpisode} setSearchEpisode={setSearchEpisode} />
+                  </div>
                   <Tabs defaultValue="list" className="w-full">
+                  
+
                     {anime.category.combiningEpisodes?.length > 0 && (
                       <TabsList className="w-full mb-4">
                         <TabsTrigger value="list" className="flex-1">Danh sách tập</TabsTrigger>
                         <TabsTrigger value="grouped" className="flex-1">Tập đã gộp</TabsTrigger>
                       </TabsList>
                     )}
+                 
 
                     <TabsContent value="list" className="mt-0">
                       <EpisodeList
-                        products={anime.category.products}
+                        products={anime.category.products.filter((product) => product.seri.toLowerCase().includes(searchEpisode.toLowerCase()))}
                         currentSeri={anime.seri}
                         isMovie={anime.category.isMovie}
                         isCompactEpisodes={isCompactEpisodes}
@@ -242,6 +248,7 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
               </div>
               <div>
                 {/* Desktop Episode Info - Hidden on mobile */}
+      
                 <div className="hidden md:block">
                   <EpisodeInfo
                     name={anime.name}
@@ -270,7 +277,9 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
                     className="mt-4"
                   />
                 </div>
-
+                <div className="my-3 w-[200px]">
+                  <SearchEpisode searchEpisode={searchEpisode} setSearchEpisode={setSearchEpisode} />
+                </div>
                 <Tabs defaultValue="list" className="w-full">
                   {anime.category.combiningEpisodes?.length > 0 && (
                     <TabsList className="w-full mb-4">
@@ -281,7 +290,7 @@ export function WatchClient({ anime, topCategory }: { anime: Anime, topCategory:
 
                   <TabsContent value="list" className="mt-0">
                     <EpisodeList
-                      products={anime.category.products}
+                      products={anime.category.products.filter((product) => product.seri.toLowerCase().includes(searchEpisode.toLowerCase()))}
                       currentSeri={anime.seri}
                       isMovie={anime.category.isMovie}
                       isCompactEpisodes={isCompactEpisodes}

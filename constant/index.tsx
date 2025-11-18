@@ -63,4 +63,5 @@ export const NAVIGATION = [
   { name: 'Phổ biến', href: '/popular' },
   { name: 'Tất cả', href: '/new' },
   { name: 'Thể loại', href: '/categories' },
-];
+  // { name: 'Tải ứng dụng', href: '/download' },
+]

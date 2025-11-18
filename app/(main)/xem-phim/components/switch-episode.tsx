@@ -1,4 +1,5 @@
 import { Switch } from "@/components/ui/switch";
+import { SearchEpisode } from "../../_components/SearchEpisode";
 
 interface SwitchEpisodeProps {
   isCompactEpisodes: boolean;

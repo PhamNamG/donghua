@@ -36,6 +36,9 @@ export const API_ENDPOINTS = {
   },
   REPORTS: {
     CREATE: '/reports'
+  },
+  FEATURE_BANNERS: {
+    ALL: '/feature-banners'
   }
 } as const;
 

@@ -96,7 +96,7 @@ export default function HomePage() {
         >
           <NewReleases />
         </LazySection>
-{/* 
+        {/* 
         <LazySection
           fallback={<SectionSkeleton />}
           className="mb-8"
@@ -125,7 +125,7 @@ export default function HomePage() {
         >
           <Categories />
         </LazySection>
-{/* 
+        {/* 
         <div className="border-t bg-muted/30">
           <div className="container py-3 flex justify-center fixed bottom-0">
             <SmartAdBanner position='bottom' size="banner" closeable />

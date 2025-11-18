@@ -1,4 +1,4 @@
-import { CategoryGrid } from "@/app/categories/_components/CategoryGrid"
+import { CategoryGrid } from "@/app/(main)/categories/_components/CategoryGrid"
 
 // export const runtime = 'edge';
 

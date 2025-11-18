@@ -30,6 +30,7 @@ import Gallery from "./gallery"
 import NominatedFilmSidebar, { TopCategoryProps } from "./_components/NominatedFilm"
 import "./style.css"
 import { BackupLinks } from "@/components/backup-links"
+import { SearchEpisode } from "../_components/SearchEpisode"
 export interface AnimeProduct {
   _id: string
   seri: string
@@ -53,6 +54,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true)
   const [isCompactEpisodes, setIsCompactEpisodes] = useState(true)
   const { addAnime, removeAnime, isInWatchlist } = useWatchlistStore()
+  const [searchEpisode, setSearchEpisode] = useState('')
   const isInList = isInWatchlist(anime._id)
   const handleWatchlistClick = () => {
     if (isInList) {
@@ -99,6 +101,7 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
       statusLower === "ongoing" ||
       totalEpisodes === 0 ||
       currentEpisodes < totalEpisodes)
+  const filteredEpisodes = anime.products && anime.products.length > 0 ? anime.products.filter((product) => product.seri.toLowerCase().includes(searchEpisode.toLowerCase())) : []
   return (
     <>
       {/* Header with background image - Full width */}
@@ -244,7 +247,12 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
 
               <div className="flex items-center justify-between mb-3">
 
-                <h2 className="text-xl font-semibold">Danh sách tập</h2>
+                <div>
+                  <h2 className="text-xl font-semibold">Danh sách tập</h2>
+                  <div className="mt-2">
+                    <SearchEpisode searchEpisode={searchEpisode} setSearchEpisode={setSearchEpisode} />
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Rút gọn</span>
                   <Switch
@@ -271,8 +279,8 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                       }
                     }}
                   >
-                    {anime.products && anime.products.length > 0
-                      ? anime.products.map((product, index) => (
+                    {filteredEpisodes && filteredEpisodes.length > 0
+                      ? filteredEpisodes.map((product, index) => (
                         <MVLink href={`${ANIME_PATHS.WATCH}/${product.slug}`} key={index}>
                           <div className="group relative flex flex-col items-center justify-center p-2 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 dark:hover:bg-accent/30 transition-all duration-200 min-h-[60px]">
                             {/* Episode Title */}
@@ -314,8 +322,8 @@ export function AnimeClient({ anime, nominatedData, topCategory }: AnimeClientPr
                       }
                     }}
                   >
-                    {anime.products && anime.products.length > 0
-                      ? anime.products.map((product, index) => (
+                    {filteredEpisodes && filteredEpisodes.length > 0
+                      ? filteredEpisodes.map((product, index) => (
                         <MVLink
                           key={index}
                           href={

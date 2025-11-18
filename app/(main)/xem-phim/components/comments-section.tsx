@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MessageCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ZaloButton } from "../../../components/zalo-button";
+import { ZaloButton } from "../../../../components/zalo-button";
 
 interface Comment {
   user: string;

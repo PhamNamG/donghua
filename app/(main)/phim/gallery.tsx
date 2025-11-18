@@ -50,7 +50,7 @@ function getAspectClasses(aspect: AspectRatio | undefined) {
 export function Gallery({ title = "Gallery", images, className }: GalleryProps) {
   if (!images || images.length === 0) return null;
   return (
-    <div className={cn("w-full space-y-3", className)}>
+    <div className={cn("w-full space-y-3 mt-5", className)}>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">{title}</h2>
         <span className="text-sm text-muted-foreground">{images.length} ảnh</span>
