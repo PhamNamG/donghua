@@ -7,12 +7,11 @@ import "swiper/css/navigation"
 import "swiper/css/free-mode"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Star, Sparkles } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useFeatureBanners } from "@/hooks/useFeatureBanners"
 import MVImage from "./ui/image"
 import MVLink from "./Link"
 import { ANIME_PATHS } from "@/constant/path.constant"
-import { Card, CardContent } from "@/components/ui/card"
 
 export function FeatureBannerCategories() {
   const { data, isLoading, error } = useFeatureBanners()
