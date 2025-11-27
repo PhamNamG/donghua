@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
       "wx1.sinaimg.cn",
       "wx2.sinaimg.cn"
     ],
-    formats: ["image/avif", "image/webp"]
+    formats: ["image/avif", "image/webp"],
+    unoptimized: true
   },
 };
 
