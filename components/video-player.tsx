@@ -57,8 +57,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [adBlockEnabled, setAdBlockEnabled] = useState(true)
   const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
   const [popupBlocked, setPopupBlocked] = useState(0)
-  const [showOverlay, setShowOverlay] = useState(false)
-  const [overlayClicks, setOverlayClicks] = useState(0)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const lastInteractionRef = useRef<number>(0)
@@ -82,6 +80,9 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
         setCurrentServer("voiceOverLink2")
       }
       setHasMounted(true)
+      if (playerRef.current) {
+        setAdBlockEnabled(true)
+      }
     }
   }, [anime, hasMounted])
 
@@ -268,12 +269,77 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
   }
 
-  const isLoadvid = videoSource?.includes('loadvid') || false
-  const isVevocloud = videoSource?.includes('vevocloud') || false
 
-  // 🔥 NUCLEAR OPTION: Transparent Overlay + RAF Focus Loop
+  const [isPlayerVisible, setIsPlayerVisible] = useState(false)
+
+  // 🛡️ Layer 0: Content Security Policy (CSP)
   useEffect(() => {
-    if (!adBlockEnabled) return
+    // Add CSP meta tag dynamically
+    const cspMeta = document.createElement('meta')
+    cspMeta.httpEquiv = 'Content-Security-Policy'
+    cspMeta.content = "frame-ancestors 'self';"
+    document.head.appendChild(cspMeta)
+
+    return () => {
+      // Cleanup
+      if (cspMeta.parentNode) {
+        cspMeta.parentNode.removeChild(cspMeta)
+      }
+    }
+  }, [])
+
+  // 🔍 Layer 1: Intersection Observer - Only block when player is visible
+  useEffect(() => {
+    if (!playerRef.current) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          setIsPlayerVisible(entry.isIntersecting)
+        })
+      },
+      { threshold: 0.5 } // Player at least 50% visible
+    )
+
+    observer.observe(playerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // 🔥 Layer 2: Block window.location redirects
+  useEffect(() => {
+    if (!adBlockEnabled || !isPlayerVisible) return
+
+    const originalLocation = window.location
+    let locationBlocked = false
+
+    try {
+      Object.defineProperty(window, 'location', {
+        get: () => originalLocation,
+        set: (value) => {
+          const timeSinceInteraction = Date.now() - lastInteractionRef.current
+          if (timeSinceInteraction < 2000 && !locationBlocked) {
+            locationBlocked = true
+            setPopupBlocked(prev => prev + 1)
+            console.log('🛡️ Blocked redirect to:', value)
+            return false
+          }
+          originalLocation.href = value
+        },
+        configurable: true
+      })
+    } catch {
+      // Some browsers don't allow redefining location
+      console.log('Cannot redefine window.location')
+    }
+
+    return () => {
+      // Note: Cannot restore original location property in all browsers
+    }
+  }, [adBlockEnabled, isPlayerVisible])
+
+  // 🔥 Layer 3: Main Popup Blocking - RAF Focus Loop
+  useEffect(() => {
+    if (!adBlockEnabled || !isPlayerVisible) return // Only active when visible!
 
     let isComponentMounted = true
 
@@ -402,27 +468,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
       window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('click', blockClicks)
     }
-  }, [videoSource, adBlockEnabled])
+  }, [videoSource, adBlockEnabled, isPlayerVisible])
 
-  // 🛡️ Overlay Protection: Show overlay for first few clicks on loadvid/vevocloud
-  useEffect(() => {
-    if (!videoSource || !adBlockEnabled) return
-    
-    const needsOverlay = isLoadvid || isVevocloud
-    
-    // 📱 Mobile needs MORE clicks because focus() doesn't work well
-    let requiredClicks = 0
-    if (isLoadvid) {
-      requiredClicks = isMobile ? 5 : 3  // 5 for mobile, 3 for desktop
-    } else if (isVevocloud) {
-      requiredClicks = isMobile ? 3 : 2  // 3 for mobile, 2 for desktop
-    }
-    
-    if (needsOverlay && requiredClicks > 0) {
-      setShowOverlay(true)
-      setOverlayClicks(0)
-    }
-  }, [videoSource, adBlockEnabled, isLoadvid, isVevocloud, isMobile])
 
   // Reset popup counter khi đổi video
   useEffect(() => {
@@ -545,83 +592,14 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           </div>
         )}
 
-        {/* Ad Block Status - Enhanced */}
-        {adBlockEnabled && (
-          <div
-            className={cn(
-              "absolute top-4 left-4 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 transition-opacity duration-300",
-              showAdBlockStatus ? "opacity-100" : "opacity-0"
-            )}
-          >
-            <Shield className="h-3.5 w-3.5 animate-pulse" />
-            <span className="font-semibold">Ad Block Active</span>
+        {/* Silent Ad Block Status - Subtle */}
+        {adBlockEnabled && showAdBlockStatus && (
+          <div className="absolute top-2 left-2 bg-green-600/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 opacity-0 animate-fade-in">
+            <Shield className="h-2.5 w-2.5" />
+            <span>Protected</span>
           </div>
         )}
 
-        {/* 🛡️ Transparent Overlay - Eats first clicks to prevent popups */}
-        {showOverlay && videoSource && (() => {
-          const requiredClicks = isLoadvid 
-            ? (isMobile ? 5 : 3) 
-            : (isVevocloud ? (isMobile ? 3 : 2) : 0)
-          
-          const handleOverlayInteraction = (e: React.MouseEvent | React.TouchEvent) => {
-            e.preventDefault()
-            e.stopPropagation()
-            
-            const newClickCount = overlayClicks + 1
-            setOverlayClicks(newClickCount)
-            setPopupBlocked(prev => prev + 1)
-            
-            if (newClickCount >= requiredClicks) {
-              setShowOverlay(false)
-              setOverlayClicks(0)
-            }
-            
-            // Track interaction
-            lastInteractionRef.current = Date.now()
-          }
-          
-          return (
-            <div
-              className="absolute inset-0 z-50 cursor-pointer bg-black/10 backdrop-blur-[1px] flex items-center justify-center"
-              onClick={handleOverlayInteraction}
-              onTouchEnd={handleOverlayInteraction}
-              onTouchStart={(e) => {
-                e.preventDefault()
-                lastInteractionRef.current = Date.now()
-              }}
-            >
-              <div className="bg-blue-600/95 text-white px-6 py-4 rounded-xl shadow-2xl text-center backdrop-blur-sm max-w-xs">
-                <Shield className="h-8 w-8 mx-auto mb-2 animate-pulse" />
-                <p className="text-sm font-bold mb-1">
-                  {isLoadvid ? "🛡️ Chặn quảng cáo Loadvid" : "🛡️ Chặn quảng cáo"}
-                </p>
-                <p className="text-xs opacity-90 mb-1">
-                  {isMobile ? "Tap" : "Click"} {requiredClicks} lần để tiếp tục
-                </p>
-                {isMobile && (
-                  <p className="text-[10px] opacity-75 mb-2">
-                    (Mobile cần nhiều {isMobile ? "tap" : "click"} hơn)
-                  </p>
-                )}
-                <div className="mt-2 flex gap-1.5 justify-center flex-wrap">
-                  {Array.from({ length: requiredClicks }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all",
-                        i < overlayClicks ? "bg-white scale-125" : "bg-white/30"
-                      )}
-                    />
-                  ))}
-                </div>
-                <div className="mt-2 text-xs opacity-80">
-                  {overlayClicks}/{requiredClicks}
-                </div>
-              </div>
-            </div>
-          )
-        })()}
       </div>
 
       {/* Controls */}
@@ -646,33 +624,15 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           ))}
         </div>
 
-        {/* Protection Status & Report */}
+        {/* Report & Stats */}
         <div className="flex items-center gap-2">
-          {/* Popup Blocked Counter */}
+          {/* Subtle Popup Counter */}
           {popupBlocked > 0 && (
-            <div className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-md">
-              <Shield className="h-3.5 w-3.5 animate-pulse" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-bold">{popupBlocked} popup{popupBlocked > 1 ? 's' : ''}</span>
-                <span className="text-[10px] opacity-90">đã chặn</span>
-              </div>
+            <div className="flex items-center gap-1 bg-green-600/90 text-white text-xs px-2 py-1 rounded">
+              <Shield className="h-3 w-3" />
+              <span className="font-medium">{popupBlocked}</span>
             </div>
           )}
-
-          {/* Ad Block Toggle (Compact) */}
-          <button
-            onClick={() => setAdBlockEnabled(!adBlockEnabled)}
-            className={cn(
-              "flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm",
-              adBlockEnabled
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-red-500 text-white hover:bg-red-600"
-            )}
-            title={adBlockEnabled ? "Tắt chặn quảng cáo" : "Bật chặn quảng cáo"}
-          >
-            <Shield className={cn("h-3.5 w-3.5 mr-1", adBlockEnabled && "animate-pulse")} />
-            {adBlockEnabled ? "ON" : "OFF"}
-          </button>
 
           {/* Report Button */}
           <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
