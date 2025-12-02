@@ -167,117 +167,16 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const addAutoplayParams = (url: string): string => {
     try {
       const urlObj = new URL(url)
-      
+
       // Add autoplay and other params
       urlObj.searchParams.set('autoplay', '1')
       urlObj.searchParams.set('muted', '0') // Không mute để có sound
-      
+
       return urlObj.toString()
     } catch {
       return url
     }
   }
-
-  // Monitor và đóng popup ads + detect redirects
-  useEffect(() => {
-    let isComponentMounted = true
-
-    // Check for new windows/popups every 100ms
-    const popupChecker = setInterval(() => {
-      if (!isComponentMounted) return
-      
-      // Lọc các window đã đóng
-      popupWindowsRef.current = popupWindowsRef.current.filter(win => !win.closed)
-      
-      // Đóng tất cả popup windows
-      popupWindowsRef.current.forEach(win => {
-        try {
-          if (!win.closed) {
-            win.close()
-            setPopupBlocked(prev => prev + 1)
-          }
-        } catch {
-          // Ignore errors
-        }
-      })
-    }, 100)
-
-    // Override window.open globally để track popups
-    const originalWindowOpen = window.open
-    window.open = function(...args) {
-      const newWindow = originalWindowOpen.apply(this, args)
-      if (newWindow) {
-        popupWindowsRef.current.push(newWindow)
-        // Đóng ngay lập tức
-        setTimeout(() => {
-          try {
-            if (newWindow && !newWindow.closed) {
-              newWindow.close()
-              setPopupBlocked(prev => prev + 1)
-            }
-          } catch {
-            // Ignore errors
-          }
-        }, 50)
-      }
-      return newWindow
-    }
-
-    // Detect blur events (tab switch / redirect)
-    const handleBlur = () => {
-      // Nếu blur xảy ra trong vòng 2s sau interaction (loadvid có delayed popups)
-      const timeSinceInteraction = Date.now() - lastInteractionRef.current
-      const timeWindow = isLoadvid ? 2000 : 1000 // loadvid cần window dài hơn
-      
-      if (timeSinceInteraction < timeWindow) {
-        setPopupBlocked(prev => prev + 1)
-        // Try to focus back ngay lập tức
-        setTimeout(() => {
-          if (isComponentMounted) {
-            window.focus()
-          }
-        }, 50) // Faster focus back (50ms thay vì 200ms)
-      }
-    }
-
-    // Detect visibility change
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        const timeSinceInteraction = Date.now() - lastInteractionRef.current
-        const timeWindow = isLoadvid ? 2000 : 1000
-        
-        if (timeSinceInteraction < timeWindow) {
-          // User vừa click và tab bị hidden → có thể là redirect
-          setPopupBlocked(prev => prev + 1)
-          setTimeout(() => {
-            if (!document.hidden && isComponentMounted) {
-              window.focus()
-            }
-          }, 100) // Faster (100ms thay vì 300ms)
-        }
-      }
-    }
-
-    window.addEventListener('blur', handleBlur)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      isComponentMounted = false
-      clearInterval(popupChecker)
-      window.open = originalWindowOpen
-      window.removeEventListener('blur', handleBlur)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      
-      // Đóng tất cả popups khi unmount
-      popupWindowsRef.current.forEach(win => {
-        try {
-          if (!win.closed) win.close()
-        } catch {
-          // Ignore
-        }
-      })
-    }
-  }, [])
 
   // Check số clicks cần thiết dựa vào domain
   const getRequiredClicks = (url: string): number => {
@@ -289,11 +188,146 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const requiredClicks = videoSource ? getRequiredClicks(videoSource) : 0
   const isLoadvid = videoSource?.includes('loadvid') || false
 
+  // Monitor và đóng popup ads + detect redirects
+  useEffect(() => {
+    let isComponentMounted = true
+    let initialWindowCount = window.length
+
+    // Aggressive popup monitoring - Check every 50ms
+    const popupChecker = setInterval(() => {
+      if (!isComponentMounted) return
+
+      // Check for new windows by counting
+      if (window.length > initialWindowCount) {
+        setPopupBlocked(prev => prev + 1)
+        initialWindowCount = window.length
+      }
+
+      // Lọc các window đã đóng
+      popupWindowsRef.current = popupWindowsRef.current.filter(win => !win.closed)
+
+      // Đóng tất cả popup windows ngay lập tức
+      popupWindowsRef.current.forEach(win => {
+        try {
+          if (!win.closed) {
+            win.close()
+            setPopupBlocked(prev => prev + 1)
+          }
+        } catch {
+          // Ignore errors
+        }
+      })
+
+      // Try to close any popup window that might have been opened
+      // This catches popups we couldn't track via window.open override
+      try {
+        if (window.opener) {
+          window.close()
+        }
+      } catch {
+        // Ignore
+      }
+    }, 50) // Faster checking (50ms thay vì 100ms)
+
+    // Override window.open globally để track và block popups
+    const originalWindowOpen = window.open
+    window.open = function (...args) {
+      // Try to prevent popup completely
+      setPopupBlocked(prev => prev + 1)
+      
+      const newWindow = originalWindowOpen.apply(this, args)
+      if (newWindow) {
+        popupWindowsRef.current.push(newWindow)
+        
+        // Close immediately (0ms)
+        try {
+          newWindow.close()
+        } catch {
+          // If immediate close fails, try again after 10ms
+          setTimeout(() => {
+            try {
+              if (newWindow && !newWindow.closed) {
+                newWindow.close()
+              }
+            } catch {
+              // Ignore errors
+            }
+          }, 10)
+        }
+      }
+      
+      // Return null to indicate popup was blocked
+      return null
+    }
+
+    // Detect blur events (tab switch / redirect) - AGGRESSIVE MODE
+    const handleBlur = () => {
+      // Always block blur during video watching (aggressive mode)
+      setPopupBlocked(prev => prev + 1)
+      
+      // Focus back IMMEDIATELY
+      if (isComponentMounted) {
+        window.focus()
+      }
+    }
+
+    // Detect visibility change - AGGRESSIVE MODE
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab bị hidden → có thể là popup/redirect
+        setPopupBlocked(prev => prev + 1)
+        
+        // Try multiple times to focus back
+        const focusAttempts = [0, 50, 100, 200]
+        focusAttempts.forEach(delay => {
+          setTimeout(() => {
+            if (!document.hidden && isComponentMounted) {
+              window.focus()
+            }
+          }, delay)
+        })
+      }
+    }
+
+    // Prevent beforeunload redirects
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const timeSinceInteraction = Date.now() - lastInteractionRef.current
+      if (timeSinceInteraction < 3000) {
+        // Might be unwanted redirect
+        e.preventDefault()
+        e.returnValue = ''
+        setPopupBlocked(prev => prev + 1)
+      }
+    }
+
+    window.addEventListener('blur', handleBlur, { capture: true })
+    document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true })
+    window.addEventListener('beforeunload', handleBeforeUnload, { capture: true })
+
+    return () => {
+      isComponentMounted = false
+      clearInterval(popupChecker)
+      window.open = originalWindowOpen
+      window.removeEventListener('blur', handleBlur)
+      window.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+
+      // Đóng tất cả popups khi unmount
+      popupWindowsRef.current.forEach(win => {
+        try {
+          if (!win.closed) win.close()
+        } catch {
+          // Ignore
+        }
+      })
+    }
+  }, [isLoadvid])
+
   // Reset popup counter và overlay khi đổi video
   useEffect(() => {
     setPopupBlocked(0)
     setClickCount(0)
-    
+
     // Show overlay nếu cần
     if (videoSource) {
       const needsOverlay = requiredClicks > 0
@@ -391,12 +425,12 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     const newClickCount = clickCount + 1
     setClickCount(newClickCount)
     setPopupBlocked(prev => prev + 1)
-    
+
     // Ẩn overlay khi đã click đủ số lần required
     if (newClickCount >= requiredClicks) {
       setShowOverlay(false)
     }
-    
+
     // Focus back ngay lập tức
     setTimeout(() => window.focus(), 0)
   }
@@ -417,78 +451,78 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
               referrerPolicy="no-referrer"
               loading="lazy"
             />
-            
+
             {/* Anti-popup Overlay */}
             {showOverlay && (
               <div
                 className="absolute inset-0 z-30 cursor-pointer bg-black/0 hover:bg-black/5 transition-colors"
                 onClick={handleOverlayClick}
               >
-               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-  <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-8 py-4 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-md">
-    {isLoadvid ? (
-      // loadvid warning
-      <>
-        <div className="flex items-center gap-3 mb-3">
-          <Shield className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            ⚠️ Server có nhiều quảng cáo
-          </span>
-        </div>
-        
-        <div className="text-sm space-y-2">
-          <p className="text-gray-700 dark:text-gray-300">
-            Server này có quá nhiều popup ads khó chặn
-          </p>
-          
-          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 rounded-lg mt-3">
-            <p className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
-              💡 Giải pháp:
-            </p>
-            <ul className="text-xs space-y-1 text-left text-gray-700 dark:text-gray-300">
-              <li>
-                • Chuyển sang <span className="font-semibold text-gray-900 dark:text-white">các server còn lại</span> - Không ads
-              </li>
-              <li>
-                • Hoặc <span className="font-semibold text-gray-900 dark:text-white">Vietsub #2</span> - Ít ads hơn
-              </li>
-              <li>
-                • Hoặc cài <span className="font-semibold text-gray-900 dark:text-white">uBlock Origin</span> extension
-              </li>
-            </ul>
-          </div>
-          
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowOverlay(false)
-            }}
-            className="w-full mt-3 bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white text-white dark:text-gray-900 font-semibold py-2 px-4 rounded pointer-events-auto transition-colors shadow-md"
-          >
-            Tôi hiểu, vẫn muốn xem
-          </button>
-        </div>
-      </>
-    ) : (
-      // vevocloud normal flow
-      <>
-        <div className="flex items-center gap-3 mb-2">
-          <Shield className="w-6 h-6 animate-pulse" />
-          <span className="text-lg font-bold">Click để xem video</span>
-        </div>
-        <div className="text-sm text-gray-700 dark:text-gray-300 text-center">
-          {clickCount === 0 ? (
-            <p>Click {requiredClicks} lần để chặn popup ads</p>
-          ) : clickCount < requiredClicks ? (
-            <p className="text-gray-900 dark:text-gray-100 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
-          ) : (
-            <p className="text-gray-900 dark:text-gray-100 font-bold">✓ Đã chặn xong!</p>
-          )}
-        </div>
-      </>
-    )}
-  </div>
-</div>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-8 py-4 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-md">
+                    {isLoadvid ? (
+                      // loadvid warning
+                      <>
+                        <div className="flex items-center gap-3 mb-3">
+                          <Shield className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            ⚠️ Server có nhiều quảng cáo
+                          </span>
+                        </div>
+
+                        <div className="text-sm space-y-2">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            Server này có quá nhiều popup ads khó chặn
+                          </p>
+
+                          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 rounded-lg mt-3">
+                            <p className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                              💡 Giải pháp:
+                            </p>
+                            <ul className="text-xs space-y-1 text-left text-gray-700 dark:text-gray-300">
+                              <li>
+                                • Chuyển sang <span className="font-semibold text-gray-900 dark:text-white">các server còn lại</span> - Không ads
+                              </li>
+                              <li>
+                                • Hoặc <span className="font-semibold text-gray-900 dark:text-white">Vietsub #2</span> - Ít ads hơn
+                              </li>
+                              <li>
+                                • Hoặc cài <span className="font-semibold text-gray-900 dark:text-white">uBlock Origin</span> extension
+                              </li>
+                            </ul>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowOverlay(false)
+                            }}
+                            className="w-full mt-3 bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white text-white dark:text-gray-900 font-semibold py-2 px-4 rounded pointer-events-auto transition-colors shadow-md"
+                          >
+                            Tôi hiểu, vẫn muốn xem
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      // vevocloud normal flow
+                      <>
+                        <div className="flex items-center gap-3 mb-2">
+                          <Shield className="w-6 h-6 animate-pulse" />
+                          <span className="text-lg font-bold">Click để xem video</span>
+                        </div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300 text-center">
+                          {clickCount === 0 ? (
+                            <p>Click {requiredClicks} lần để chặn popup ads</p>
+                          ) : clickCount < requiredClicks ? (
+                            <p className="text-gray-900 dark:text-gray-100 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
+                          ) : (
+                            <p className="text-gray-900 dark:text-gray-100 font-bold">✓ Đã chặn xong!</p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </>
@@ -549,7 +583,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
               </div>
             </div>
           )}
-          
+
           {/* Report Button */}
           <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
             <DialogTrigger asChild>

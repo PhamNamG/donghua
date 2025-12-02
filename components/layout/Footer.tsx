@@ -36,70 +36,72 @@ export default function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Top Section: Logo + Vietnam Badge */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-          <MVLink href="/" className="flex items-center gap-3">
-            <Image
-              src="/images/b32705f7-9444-41f9-8457-d1cc7773a259-min.png"
-              alt="HH3D Logo"
-              width={60}
-              height={60}
-              className="rounded-full"
-            />
-            <div>
-              <h3 className="text-2xl font-bold">HH3D</h3>
-              <div className="flex items-center gap-2">
-                {footerLinks.categories.map((link) => (
-                  <div key={link.href}>
+        {/* Top Section: Logo + Categories + Social */}
+        <div className="flex flex-col gap-6 mb-8">
+          {/* Logo + Categories */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+            <MVLink href="/" className="flex items-center gap-3">
+              <Image
+                src="/images/b32705f7-9444-41f9-8457-d1cc7773a259-min.png"
+                alt="HH3D Logo"
+                width={60}
+                height={60}
+                className="rounded-full"
+              />
+              <div>
+                <h3 className="text-2xl font-bold">HH3D</h3>
+                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                  {footerLinks.categories.map((link) => (
                     <MVLink
+                      key={link.name}
                       href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      className="text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       {link.name}
                     </MVLink>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className='border-l border-muted-foreground h-[60px] w-1 mx-10 border-[#e0e0e0]!'></div>
-            <div>
-              <div className="flex gap-10">
-                {Object.entries(socialLinks).map(([key, url]) => {
-                  const Icon = socialIcons[key as keyof typeof socialIcons];
-                  return (
-                    <MVLink
-                      key={key}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
-                    >
-                      <Icon className="w-5 h-5" />
-                    </MVLink>
-                  );
-                })}
-              </div>
-            </div>
-          </MVLink>
+            </MVLink>
+          </div>
+
+          {/* Divider - Hidden on mobile */}
+          <div className="hidden md:block border-t border-border"></div>
+
+          {/* Social Links */}
+          <div className="flex justify-center md:justify-start gap-4">
+            {Object.entries(socialLinks).map(([key, url]) => {
+              const Icon = socialIcons[key as keyof typeof socialIcons];
+              return (
+                <MVLink
+                  key={key}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                >
+                  <Icon className="w-5 h-5" />
+                </MVLink>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Middle Section: Links Grid */}
         {/* Main Links */}
-        <div className="w-6/12 flex gap-2 mb-6">
+        <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-2 mb-6">
           {footerLinks.main.map((link) => (
-            <div key={link.href}>
-              <MVLink
-                href={link.href}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors color-[#e0e0e0]!"
-              >
-                {link.name}
-              </MVLink>
-            </div>
+            <MVLink
+              key={link.href}
+              href={link.href}
+              className="text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              {link.name}
+            </MVLink>
           ))}
         </div>
 
         {/* Description */}
-        <div className="mb-8 text-sm text-muted-foreground leading-relaxed w-6/12">
+        <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed text-center md:text-left max-w-3xl mx-auto md:mx-0">
           <p>
             HH3D – Trang xem phim hoạt hình Trung Quốc (Donghua) online chất lượng cao miễn phí,
             thuyết minh, lồng tiếng full HD. Kho phim mới không lộ, phim chiếu rạp, phim bộ,
