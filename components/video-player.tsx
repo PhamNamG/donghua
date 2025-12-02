@@ -57,6 +57,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [adBlockEnabled, setAdBlockEnabled] = useState(true)
   const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
   const [popupBlocked, setPopupBlocked] = useState(0)
+  const [clickEaterActive, setClickEaterActive] = useState(true)
+  const [eatenClicks, setEatenClicks] = useState(0)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const lastInteractionRef = useRef<number>(0)
@@ -269,6 +271,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
   }
 
+  const isLoadvid = videoSource?.includes('loadvid') || false
+  const isVevocloud = videoSource?.includes('vevocloud') || false
 
   const [isPlayerVisible, setIsPlayerVisible] = useState(false)
 
@@ -342,47 +346,44 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     if (!adBlockEnabled || !isPlayerVisible) return // Only active when visible!
 
     let isComponentMounted = true
+    
+    // ⚡ Initialize interaction time to NOW - Block from start!
+    lastInteractionRef.current = Date.now()
 
-    // 1. Override window.open - ALWAYS return null
+    // 1. AGGRESSIVE window.open override - ALWAYS block, count it
     const originalWindowOpen = window.open
-    window.open = function () {
+    window.open = function (...args) {
+      console.log('🛡️ [INNER] BLOCKED window.open:', args[0])
       setPopupBlocked(prev => prev + 1)
-      // Immediate focus back
+      // Multiple focus attempts
       window.focus()
       requestAnimationFrame(() => window.focus())
-      return null // Don't open anything
+      setTimeout(() => window.focus(), 0)
+      setTimeout(() => window.focus(), 10)
+      return null // NEVER allow
     }
 
-    // 2. 🚀 RAF Focus Loop - Smoother than setInterval
+    // 2. 🚀 AGGRESSIVE RAF Focus Loop - ALWAYS monitor
     const focusLoop = () => {
       if (!isComponentMounted) return
       
-      const timeSinceInteraction = Date.now() - lastInteractionRef.current
-      const activeWindow = isMobile ? 5000 : 3000 // Longer for mobile
-      
-      if (timeSinceInteraction < activeWindow) {
-        if (document.hidden || !document.hasFocus()) {
-          setPopupBlocked(prev => prev + 1)
-          
-          // Desktop: window.focus() works
-          if (!isMobile) {
-            window.focus()
-          } else {
-            // Mobile: Try alternative methods
-            try {
-              // Method 1: Try to scroll (brings focus back on some browsers)
-              window.scrollTo(window.scrollX, window.scrollY)
-              
-              // Method 2: Try to focus on document
-              if (document.body) {
-                document.body.focus()
-              }
-              
-              // Method 3: Dispatch focus event
-              window.dispatchEvent(new Event('focus'))
-            } catch {
-              // Ignore errors
+      // ALWAYS check focus (no time limit!)
+      if (document.hidden || !document.hasFocus()) {
+        setPopupBlocked(prev => prev + 1)
+        
+        // Desktop: window.focus() works
+        if (!isMobile) {
+          window.focus()
+        } else {
+          // Mobile: Try alternative methods
+          try {
+            window.scrollTo(window.scrollX, window.scrollY)
+            if (document.body) {
+              document.body.focus()
             }
+            window.dispatchEvent(new Event('focus'))
+          } catch {
+            // Ignore errors
           }
         }
       }
@@ -391,63 +392,59 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
     rafRef.current = requestAnimationFrame(focusLoop)
 
-    // 3. Instant blur detection - Focus back IMMEDIATELY
+    // 3. AGGRESSIVE blur detection - ALWAYS block
     const handleBlur = (e: FocusEvent) => {
-      const timeSinceInteraction = Date.now() - lastInteractionRef.current
-      if (timeSinceInteraction < 2000) { // Within 2s of click
-        e.preventDefault()
-        e.stopPropagation()
-        setPopupBlocked(prev => prev + 1)
-        
-        // Immediate focus back - RAF for smoothness
-        window.focus()
-        requestAnimationFrame(() => window.focus())
-        setTimeout(() => window.focus(), 0)
-        setTimeout(() => window.focus(), 10)
-        setTimeout(() => window.focus(), 20)
-      }
+      console.log('🛡️ [INNER] Detected blur, focusing back')
+      e.preventDefault()
+      e.stopPropagation()
+      setPopupBlocked(prev => prev + 1)
+      
+      // Multiple focus attempts
+      window.focus()
+      requestAnimationFrame(() => window.focus())
+      setTimeout(() => window.focus(), 0)
+      setTimeout(() => window.focus(), 10)
+      setTimeout(() => window.focus(), 20)
+      setTimeout(() => window.focus(), 50)
     }
 
-    // 4. Visibility change - Focus back when tab becomes hidden
+    // 4. AGGRESSIVE visibility change - ALWAYS block
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        const timeSinceInteraction = Date.now() - lastInteractionRef.current
-        if (timeSinceInteraction < 2000) { // Within 2s of click
-          setPopupBlocked(prev => prev + 1)
-          
-          // RAF + setTimeout combo
-          requestAnimationFrame(() => window.focus())
-          setTimeout(() => window.focus(), 0)
-          setTimeout(() => window.focus(), 50)
-          setTimeout(() => window.focus(), 100)
-        }
-      }
-    }
-
-    // 5. Prevent page unload during interaction
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const timeSinceInteraction = Date.now() - lastInteractionRef.current
-      if (timeSinceInteraction < 1000) { // Within 1s - likely unwanted redirect
-        e.preventDefault()
-        e.returnValue = ''
+        console.log('🛡️ [INNER] Page hidden, restoring')
         setPopupBlocked(prev => prev + 1)
+        
+        // Multiple focus attempts
+        requestAnimationFrame(() => window.focus())
+        setTimeout(() => window.focus(), 0)
+        setTimeout(() => window.focus(), 50)
+        setTimeout(() => window.focus(), 100)
+        setTimeout(() => window.focus(), 200)
       }
     }
 
-    // 6. Block ALL clicks during overlay (catch target="_blank" links)
+    // 5. AGGRESSIVE beforeunload - ALWAYS block
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('🛡️ [INNER] Blocked beforeunload')
+      e.preventDefault()
+      e.returnValue = ''
+      setPopupBlocked(prev => prev + 1)
+      return ''
+    }
+
+    // 6. AGGRESSIVE click blocking - ALWAYS check
     const blockClicks = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      // Check if clicking on a link or inside iframe
-      if (target.tagName === 'A' || target.closest('a') || target.tagName === 'IFRAME') {
-        const timeSinceInteraction = Date.now() - lastInteractionRef.current
-        if (timeSinceInteraction < 500) { // Very recent click - might be ad
-          const link = target.tagName === 'A' ? target : target.closest('a')
-          if (link && (link as HTMLAnchorElement).target === '_blank') {
-            e.preventDefault()
-            e.stopPropagation()
-            e.stopImmediatePropagation()
-            setPopupBlocked(prev => prev + 1)
-          }
+      
+      // Check for links
+      if (target.tagName === 'A' || target.closest('a')) {
+        const link = target.tagName === 'A' ? target : target.closest('a')
+        if (link && (link as HTMLAnchorElement).target === '_blank') {
+          e.preventDefault()
+          e.stopPropagation()
+          e.stopImmediatePropagation()
+          setPopupBlocked(prev => prev + 1)
+          console.log('🛡️ [INNER] BLOCKED target="_blank" link')
         }
       }
     }
@@ -471,10 +468,15 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   }, [videoSource, adBlockEnabled, isPlayerVisible])
 
 
-  // Reset popup counter khi đổi video
+  // Reset popup counter và click eater khi đổi video
   useEffect(() => {
     setPopupBlocked(0)
+    setClickEaterActive(true)
+    setEatenClicks(0)
   }, [videoSource])
+
+  // Determine required clicks based on server
+  const requiredClicks = isLoadvid ? 3 : (isVevocloud ? 2 : 0)
 
   // Track user interaction với player
   useEffect(() => {
@@ -568,7 +570,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             className="w-full h-full"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
             referrerPolicy="no-referrer"
             onLoad={adBlockEnabled ? blockAdsAndPopups : undefined}
           />
@@ -598,6 +600,51 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             <Shield className="h-2.5 w-2.5" />
             <span>Protected</span>
           </div>
+        )}
+
+        {/* 🥷 INVISIBLE Click Eater - Eats first clicks silently */}
+        {clickEaterActive && videoSource && requiredClicks > 0 && (
+          <div
+            className="absolute inset-0 z-40 cursor-pointer"
+            style={{ 
+              pointerEvents: eatenClicks < requiredClicks ? 'auto' : 'none',
+              background: 'transparent' // Completely invisible
+            }}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              
+              const newCount = eatenClicks + 1
+              setEatenClicks(newCount)
+              setPopupBlocked(prev => prev + 1)
+              
+              console.log(`🥷 [SILENT] Ate click ${newCount}/${requiredClicks}`)
+              
+              if (newCount >= requiredClicks) {
+                console.log('🥷 [SILENT] Click eater deactivated, video accessible')
+                setClickEaterActive(false)
+              }
+              
+              // Track interaction
+              lastInteractionRef.current = Date.now()
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              
+              const newCount = eatenClicks + 1
+              setEatenClicks(newCount)
+              setPopupBlocked(prev => prev + 1)
+              
+              console.log(`🥷 [SILENT] Ate touch ${newCount}/${requiredClicks}`)
+              
+              if (newCount >= requiredClicks) {
+                console.log('🥷 [SILENT] Click eater deactivated, video accessible')
+                setClickEaterActive(false)
+              }
+              
+              lastInteractionRef.current = Date.now()
+            }}
+          />
         )}
 
       </div>
