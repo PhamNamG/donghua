@@ -273,7 +273,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   const isLoadvid = videoSource?.includes('loadvid') || false
   const isVevocloud = videoSource?.includes('vevocloud') || false
-
   const [isPlayerVisible, setIsPlayerVisible] = useState(false)
 
   // 🛡️ Layer 0: Content Security Policy (CSP)
@@ -471,8 +470,17 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   // Reset popup counter và click eater khi đổi video
   useEffect(() => {
     setPopupBlocked(0)
-    setClickEaterActive(true)
     setEatenClicks(0)
+    
+    // Delay click eater activation để cho autoplay trigger trước
+    setClickEaterActive(false)
+    
+    const delayTimer = setTimeout(() => {
+      setClickEaterActive(true)
+      console.log('🥷 [SILENT] Click eater activated after autoplay delay')
+    }, 2000) // 2 giây delay
+    
+    return () => clearTimeout(delayTimer)
   }, [videoSource])
 
   // Determine required clicks based on server
@@ -570,7 +578,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             className="w-full h-full"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+            sandbox={isVevocloud ? "allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox " : "allow-scripts allow-same-origin allow-presentation allow-forms"}
             referrerPolicy="no-referrer"
             onLoad={adBlockEnabled ? blockAdsAndPopups : undefined}
           />
