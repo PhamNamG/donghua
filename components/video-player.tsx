@@ -59,6 +59,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [isUserInteracting, setIsUserInteracting] = useState(false)
   const [showOverlay, setShowOverlay] = useState(true)
   const [clickCount, setClickCount] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const popupWindowsRef = useRef<Window[]>([])
@@ -70,6 +71,15 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   // State to track if component has mounted
   const [hasMounted, setHasMounted] = useState(false)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+    }
+    checkMobile()
+  }, [])
   // Effect to set initial server preference
   useEffect(() => {
     if (!hasMounted && anime) {
@@ -180,8 +190,15 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   // Check số clicks cần thiết dựa vào domain
   const getRequiredClicks = (url: string): number => {
-    if (url.includes('loadvid')) return 4 // loadvid có nhiều layers + delayed popups
-    if (url.includes('vevocloud')) return 2 // vevocloud có 2 layers
+    // Mobile cần nhiều clicks hơn vì popup behavior khác
+    const mobileMultiplier = isMobile ? 1.5 : 1
+    
+    if (url.includes('loadvid')) {
+      return Math.ceil(4 * mobileMultiplier) // Mobile: 6 clicks, Desktop: 4 clicks
+    }
+    if (url.includes('vevocloud')) {
+      return Math.ceil(2 * mobileMultiplier) // Mobile: 3 clicks, Desktop: 2 clicks
+    }
     return 0 // Không cần overlay
   }
 
@@ -421,7 +438,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const availableServers = getAvailableServers(anime);
 
   // Handle overlay click - ăn popup
-  const handleOverlayClick = () => {
+  const handleOverlayClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
     const newClickCount = clickCount + 1
     setClickCount(newClickCount)
     setPopupBlocked(prev => prev + 1)
@@ -431,8 +451,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
       setShowOverlay(false)
     }
 
-    // Focus back ngay lập tức
+    // Focus back ngay lập tức và multiple attempts
+    window.focus()
     setTimeout(() => window.focus(), 0)
+    setTimeout(() => window.focus(), 50)
   }
 
   return (
@@ -455,8 +477,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             {/* Anti-popup Overlay */}
             {showOverlay && (
               <div
-                className="absolute inset-0 z-30 cursor-pointer bg-black/0 hover:bg-black/5 transition-colors"
+                className="absolute inset-0 z-30 cursor-pointer bg-black/0 hover:bg-black/5 active:bg-black/10 transition-colors touch-none"
                 onClick={handleOverlayClick}
+                onTouchEnd={handleOverlayClick}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-8 py-4 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-md">
@@ -508,13 +532,22 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
                       <>
                         <div className="flex items-center gap-3 mb-2">
                           <Shield className="w-6 h-6 animate-pulse" />
-                          <span className="text-lg font-bold">Click để xem video</span>
+                          <span className="text-lg font-bold">{isMobile ? 'Tap' : 'Click'} để xem video</span>
                         </div>
                         <div className="text-sm text-gray-700 dark:text-gray-300 text-center">
                           {clickCount === 0 ? (
-                            <p>Click {requiredClicks} lần để chặn popup ads</p>
+                            <>
+                              <p>{isMobile ? 'Tap' : 'Click'} {requiredClicks} lần để chặn popup ads</p>
+                              {isMobile && (
+                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                                  📱 Mobile: {requiredClicks} taps required
+                                </p>
+                              )}
+                            </>
                           ) : clickCount < requiredClicks ? (
-                            <p className="text-gray-900 dark:text-gray-100 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
+                            <p className="text-gray-900 dark:text-gray-100 font-semibold">
+                              Còn {requiredClicks - clickCount} {isMobile ? 'tap' : 'click'} nữa...
+                            </p>
                           ) : (
                             <p className="text-gray-900 dark:text-gray-100 font-bold">✓ Đã chặn xong!</p>
                           )}
