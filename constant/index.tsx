@@ -58,10 +58,17 @@ export const AUTH = {
   LOGIN_PATH: '/login',
 } as const;
 
-export const NAVIGATION = [
+// Navigation Items
+export interface NavigationItem {
+  name: string;
+  href: string;
+  children?: Array<{ name: string; href: string }>;
+  hasDropdown?: boolean;
+}
+
+export const NAVIGATION = (childCategories: Array<{ name: string; href: string }>): NavigationItem[] => [
   { name: 'Trang chủ', href: '/' },
-  { name: 'Phổ biến', href: '/popular' },
-  { name: 'Tất cả', href: '/new' },
-  { name: 'Thể loại', href: '/categories' },
+  { name: 'Duyệt phim', href: '/duyet-phim' },
+  { name: 'Thể loại', href: '#', children: childCategories, hasDropdown: true },
   // { name: 'Tải ứng dụng', href: '/download' },
-]
+];

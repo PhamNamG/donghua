@@ -55,10 +55,14 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [videoSource, setVideoSource] = useState<string | null>(null)
   const [currentServer, setCurrentServer] = useState<"dailymotion" | "server2" | "link" | "voiceOverLink" | "voiceOverLink2">("dailymotion")
   const [isLoading, setIsLoading] = useState(true)
-  const [adBlockEnabled, setAdBlockEnabled] = useState(true)
-  const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
+  const [popupBlocked, setPopupBlocked] = useState(0)
+  const [isUserInteracting, setIsUserInteracting] = useState(false)
+  const [showOverlay, setShowOverlay] = useState(true)
+  const [clickCount, setClickCount] = useState(0)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const popupWindowsRef = useRef<Window[]>([])
+  const lastInteractionRef = useRef<number>(0)
   const { mutate: createReport, isPending: isReporting, isError: isReportError, reset: resetReport } = useCreateReport()
   const [reportComment, setReportComment] = useState("")
   const [isReportOpen, setIsReportOpen] = useState(false)
@@ -89,7 +93,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     // Check if we have a combining episode first
     if (combiningEpisodes && combiningEpisodes.link1) {
       if (isValidUrl(combiningEpisodes.link1)) {
-        setVideoSource(addAdBlockParams(combiningEpisodes.link1))
+        setVideoSource(addAutoplayParams(combiningEpisodes.link1))
         setIsLoading(false)
         return
       }
@@ -97,7 +101,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
     const trySetVideoSource = (url: string | undefined): boolean => {
       if (url && isValidUrl(url)) {
-        setVideoSource(addAdBlockParams(url))
+        setVideoSource(addAutoplayParams(url))
         setIsLoading(false)
         return true
       }
@@ -106,7 +110,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
     const tryDailyMotion = (): boolean => {
       if (anime.dailyMotionServer && isValidUrl(anime.dailyMotionServer)) {
-        setVideoSource(addAdBlockParams(anime.dailyMotionServer))
+        setVideoSource(addAutoplayParams(anime.dailyMotionServer))
         setIsLoading(false)
         return true
       }
@@ -149,61 +153,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     setIsLoading(false)
   }, [anime, currentServer, combiningEpisodes])
 
-  // Hàm thêm tham số chặn quảng cáo vào URL
-  const addAdBlockParams = (url: string): string => {
-    if (!adBlockEnabled) return url
-
-    try {
-      const urlObj = new URL(url)
-
-      // Các tham số để giảm quảng cáo
-      const adBlockParams = {
-        'autoplay': '1',
-        'mute': '0',
-        'controls': '1',
-        'modestbranding': '1', // YouTube
-        'rel': '0', // YouTube
-        'showinfo': '0', // YouTube
-        'iv_load_policy': '3', // YouTube
-        'disablekb': '0',
-        'fs': '1',
-        'playsinline': '1',
-        'widget': '1',
-        'app': 'embed'
-      }
-
-      Object.entries(adBlockParams).forEach(([key, value]) => {
-        urlObj.searchParams.set(key, value)
-      })
-
-      return urlObj.toString()
-    } catch {
-      return url
-    }
-  }
-
-  // Effect để chặn quảng cáo sau khi iframe load
-  useEffect(() => {
-    if (videoSource && adBlockEnabled) {
-      const timer = setTimeout(() => {
-        blockAdsAndPopups()
-      }, 2000) // Chờ 2 giây để iframe load xong
-
-      return () => clearTimeout(timer)
-    }
-  }, [videoSource, adBlockEnabled])
-
-  // Effect để ẩn ad block status sau 3s
-  useEffect(() => {
-    if (adBlockEnabled) {
-      setShowAdBlockStatus(true)
-      const timer = setTimeout(() => {
-        setShowAdBlockStatus(false)
-      }, 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [adBlockEnabled])
-
   // Function to validate URL
   const isValidUrl = (urlString: string): boolean => {
     try {
@@ -214,52 +163,168 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
   }
 
-  const blockAdsAndPopups = () => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      try {
-        const iframeDoc = iframeRef.current.contentWindow.document
-
-        const adSelectors = [
-          '[id*="ad"]',
-          '[class*="ad"]',
-          '[class*="advertisement"]',
-          '[class*="popup"]',
-          '[class*="overlay"]',
-          '.ad-container',
-          '.ads',
-          '.advertisement',
-          '.popup-overlay',
-          '.modal-overlay'
-        ]
-
-        adSelectors.forEach(selector => {
-          const elements = iframeDoc.querySelectorAll(selector)
-          elements.forEach(el => {
-            if (el instanceof HTMLElement) {
-              el.style.display = 'none !important'
-              el.remove()
-            }
-          })
-        })
-
-        // Chặn window.open (popup)
-        iframeRef.current.contentWindow.open = () => null
-
-        // Chặn các sự kiện click không mong muốn
-        iframeDoc.addEventListener('click', (e) => {
-          const target = e.target as HTMLElement
-          if (target.tagName === 'A' && target.getAttribute('target') === '_blank') {
-            e.preventDefault()
-            e.stopPropagation()
-          }
-        }, true)
-
-      } catch {
-        // Cross-origin restrictions - không thể truy cập iframe content
-        console.log('Cannot access iframe content due to CORS policy')
-      }
+  // Add autoplay params to video URL
+  const addAutoplayParams = (url: string): string => {
+    try {
+      const urlObj = new URL(url)
+      
+      // Add autoplay and other params
+      urlObj.searchParams.set('autoplay', '1')
+      urlObj.searchParams.set('muted', '0') // Không mute để có sound
+      
+      return urlObj.toString()
+    } catch {
+      return url
     }
   }
+
+  // Monitor và đóng popup ads + detect redirects
+  useEffect(() => {
+    let isComponentMounted = true
+
+    // Check for new windows/popups every 100ms
+    const popupChecker = setInterval(() => {
+      if (!isComponentMounted) return
+      
+      // Lọc các window đã đóng
+      popupWindowsRef.current = popupWindowsRef.current.filter(win => !win.closed)
+      
+      // Đóng tất cả popup windows
+      popupWindowsRef.current.forEach(win => {
+        try {
+          if (!win.closed) {
+            win.close()
+            setPopupBlocked(prev => prev + 1)
+          }
+        } catch {
+          // Ignore errors
+        }
+      })
+    }, 100)
+
+    // Override window.open globally để track popups
+    const originalWindowOpen = window.open
+    window.open = function(...args) {
+      const newWindow = originalWindowOpen.apply(this, args)
+      if (newWindow) {
+        popupWindowsRef.current.push(newWindow)
+        // Đóng ngay lập tức
+        setTimeout(() => {
+          try {
+            if (newWindow && !newWindow.closed) {
+              newWindow.close()
+              setPopupBlocked(prev => prev + 1)
+            }
+          } catch {
+            // Ignore errors
+          }
+        }, 50)
+      }
+      return newWindow
+    }
+
+    // Detect blur events (tab switch / redirect)
+    const handleBlur = () => {
+      // Nếu blur xảy ra trong vòng 2s sau interaction (loadvid có delayed popups)
+      const timeSinceInteraction = Date.now() - lastInteractionRef.current
+      const timeWindow = isLoadvid ? 2000 : 1000 // loadvid cần window dài hơn
+      
+      if (timeSinceInteraction < timeWindow) {
+        setPopupBlocked(prev => prev + 1)
+        // Try to focus back ngay lập tức
+        setTimeout(() => {
+          if (isComponentMounted) {
+            window.focus()
+          }
+        }, 50) // Faster focus back (50ms thay vì 200ms)
+      }
+    }
+
+    // Detect visibility change
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const timeSinceInteraction = Date.now() - lastInteractionRef.current
+        const timeWindow = isLoadvid ? 2000 : 1000
+        
+        if (timeSinceInteraction < timeWindow) {
+          // User vừa click và tab bị hidden → có thể là redirect
+          setPopupBlocked(prev => prev + 1)
+          setTimeout(() => {
+            if (!document.hidden && isComponentMounted) {
+              window.focus()
+            }
+          }, 100) // Faster (100ms thay vì 300ms)
+        }
+      }
+    }
+
+    window.addEventListener('blur', handleBlur)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      isComponentMounted = false
+      clearInterval(popupChecker)
+      window.open = originalWindowOpen
+      window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      
+      // Đóng tất cả popups khi unmount
+      popupWindowsRef.current.forEach(win => {
+        try {
+          if (!win.closed) win.close()
+        } catch {
+          // Ignore
+        }
+      })
+    }
+  }, [])
+
+  // Check số clicks cần thiết dựa vào domain
+  const getRequiredClicks = (url: string): number => {
+    if (url.includes('loadvid')) return 4 // loadvid có nhiều layers + delayed popups
+    if (url.includes('vevocloud')) return 2 // vevocloud có 2 layers
+    return 0 // Không cần overlay
+  }
+
+  const requiredClicks = videoSource ? getRequiredClicks(videoSource) : 0
+  const isLoadvid = videoSource?.includes('loadvid') || false
+
+  // Reset popup counter và overlay khi đổi video
+  useEffect(() => {
+    setPopupBlocked(0)
+    setClickCount(0)
+    
+    // Show overlay nếu cần
+    if (videoSource) {
+      const needsOverlay = requiredClicks > 0
+      setShowOverlay(needsOverlay)
+    } else {
+      setShowOverlay(false)
+    }
+  }, [videoSource, requiredClicks])
+
+  // Track user interaction với player
+  useEffect(() => {
+    const playerElement = playerRef.current
+    if (!playerElement) return
+
+    const handleInteraction = () => {
+      lastInteractionRef.current = Date.now()
+      setIsUserInteracting(true)
+      // Reset sau 2s
+      setTimeout(() => setIsUserInteracting(false), 2000)
+    }
+
+    playerElement.addEventListener('click', handleInteraction)
+    playerElement.addEventListener('mousedown', handleInteraction)
+    playerElement.addEventListener('touchstart', handleInteraction)
+
+    return () => {
+      playerElement.removeEventListener('click', handleInteraction)
+      playerElement.removeEventListener('mousedown', handleInteraction)
+      playerElement.removeEventListener('touchstart', handleInteraction)
+    }
+  }, [])
 
   type ServerType = {
     id: "dailymotion" | "server2" | "link" | "voiceOverLink" | "voiceOverLink2";
@@ -321,20 +386,99 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   const availableServers = getAvailableServers(anime);
 
+  // Handle overlay click - ăn popup
+  const handleOverlayClick = () => {
+    const newClickCount = clickCount + 1
+    setClickCount(newClickCount)
+    setPopupBlocked(prev => prev + 1)
+    
+    // Ẩn overlay khi đã click đủ số lần required
+    if (newClickCount >= requiredClicks) {
+      setShowOverlay(false)
+    }
+    
+    // Focus back ngay lập tức
+    setTimeout(() => window.focus(), 0)
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div ref={playerRef} className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
         {/* Video iframe */}
         {videoSource ? (
-          <iframe
-            ref={iframeRef}
-            src={videoSource}
-            className="w-full h-full"
-            allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
-            onLoad={adBlockEnabled ? blockAdsAndPopups : undefined}
-          />
+          <>
+            <iframe
+              ref={iframeRef}
+              src={videoSource}
+              className="w-full h-full"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+            
+            {/* Anti-popup Overlay */}
+            {showOverlay && (
+              <div
+                className="absolute inset-0 z-30 cursor-pointer bg-black/0 hover:bg-black/5 transition-colors"
+                onClick={handleOverlayClick}
+              >
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-primary/95 text-primary-foreground px-8 py-4 rounded-xl shadow-2xl border-2 border-primary-foreground/20 backdrop-blur-sm max-w-md">
+                    {isLoadvid ? (
+                      // loadvid warning
+                      <>
+                        <div className="flex items-center gap-3 mb-3">
+                          <Shield className="w-6 h-6 text-yellow-300" />
+                          <span className="text-lg font-bold">⚠️ Server có nhiều quảng cáo</span>
+                        </div>
+                        <div className="text-sm space-y-2">
+                          <p className="text-yellow-200">
+                            Server này có quá nhiều popup ads khó chặn
+                          </p>
+                          <div className="bg-black/20 p-3 rounded-lg mt-3">
+                            <p className="font-semibold mb-2">💡 Giải pháp:</p>
+                            <ul className="text-xs space-y-1 text-left">
+                              <li>• Chuyển sang <span className="text-green-300 font-semibold">các server còn lại</span> - Không ads</li>
+                              <li>• Hoặc <span className="text-green-300 font-semibold">Vietsub #2</span> - Ít ads hơn</li>
+                              <li>• Hoặc cài <span className="text-blue-300 font-semibold">uBlock Origin</span> extension</li>
+                            </ul>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowOverlay(false)
+                            }}
+                            className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded pointer-events-auto transition-colors"
+                          >
+                            Tôi hiểu, vẫn muốn xem
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      // vevocloud normal flow
+                      <>
+                        <div className="flex items-center gap-3 mb-2">
+                          <Shield className="w-6 h-6 animate-pulse" />
+                          <span className="text-lg font-bold">Click để xem video</span>
+                        </div>
+                        <div className="text-sm opacity-90 text-center">
+                          {clickCount === 0 ? (
+                            <p>Click {requiredClicks} lần để chặn popup ads</p>
+                          ) : clickCount < requiredClicks ? (
+                            <p className="text-green-200 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
+                          ) : (
+                            <p className="text-green-300 font-bold">✓ Đã chặn xong!</p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black text-white">
             {isLoading ? (
@@ -350,21 +494,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
         {/* Copyright Notice */}
         {episode && episode.copyright && (
-          <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded z-20">
             {episode.copyright}
-          </div>
-        )}
-
-        {/* Ad Block Status */}
-        {adBlockEnabled && (
-          <div
-            className={cn(
-              "absolute top-4 left-4 bg-green-600/80 text-white text-xs px-2 py-1 rounded flex items-center gap-1 transition-opacity duration-300",
-              showAdBlockStatus ? "opacity-100" : "opacity-0"
-            )}
-          >
-            <Shield className="h-3 w-3" />
-            <span>Ad Block ON</span>
           </div>
         )}
       </div>
@@ -391,21 +522,21 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           ))}
         </div>
 
-        {/* Ad Block Toggle */}
+        {/* Report & Info */}
         <div className="flex item-center gap-2">
-          <button
-            onClick={() => setAdBlockEnabled(!adBlockEnabled)}
-            className={cn(
-              "flex items-center px-3 py-1.5 rounded text-xs font-medium transition-all",
-              adBlockEnabled
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-            )}
-            title={adBlockEnabled ? "Disable ad blocking" : "Enable ad blocking"}
-          >
-            <Shield className="h-3 w-3 mr-1" />
-            {adBlockEnabled ? "Ad Block ON" : "Ad Block OFF"}
-          </button>
+          {/* Popup Blocked Counter */}
+          {popupBlocked > 0 && (
+            <div className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-md">
+              <Shield className="h-3.5 w-3.5 animate-pulse" />
+              <div className="flex flex-col">
+                <span className="font-semibold">{popupBlocked} ads chặn</span>
+                {isUserInteracting && (
+                  <span className="text-[10px] opacity-80">Đang bảo vệ...</span>
+                )}
+              </div>
+            </div>
+          )}
+          
           {/* Report Button */}
           <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
             <DialogTrigger asChild>
