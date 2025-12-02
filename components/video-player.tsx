@@ -3,13 +3,12 @@ import React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Monitor, Cloud, Link, Shield, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { CombiningEpisode } from "@/app/(main)/xem-phim/[slug]/watch-client"
 import { useCreateReport } from "@/hooks/useReport"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from 'react-toastify'
 import { AxiosError } from "axios"
-
+import { CombiningEpisode } from "@/app/(main)/xem-phim/[slug]/watch-client"
 interface Product {
   _id: string
   seri: string
@@ -55,12 +54,17 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [videoSource, setVideoSource] = useState<string | null>(null)
   const [currentServer, setCurrentServer] = useState<"dailymotion" | "server2" | "link" | "voiceOverLink" | "voiceOverLink2">("dailymotion")
   const [isLoading, setIsLoading] = useState(true)
+  const [adBlockEnabled, setAdBlockEnabled] = useState(true)
+  const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
   const [popupBlocked, setPopupBlocked] = useState(0)
   const [isUserInteracting, setIsUserInteracting] = useState(false)
+  const [showOverlay, setShowOverlay] = useState(false)
+  const [overlayClicks, setOverlayClicks] = useState(0)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const popupWindowsRef = useRef<Window[]>([])
   const lastInteractionRef = useRef<number>(0)
+  const rafRef = useRef<number | null>(null)
   const { mutate: createReport, isPending: isReporting, isError: isReportError, reset: resetReport } = useCreateReport()
   const [reportComment, setReportComment] = useState("")
   const [isReportOpen, setIsReportOpen] = useState(false)
@@ -68,8 +72,9 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   // State to track if component has mounted
   const [hasMounted, setHasMounted] = useState(false)
-
-
+  
+  // Detect mobile device
+  const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   // Effect to set initial server preference
   useEffect(() => {
     if (!hasMounted && anime) {
@@ -88,13 +93,12 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
       return
     }
 
-
     setIsLoading(true)
 
     // Check if we have a combining episode first
     if (combiningEpisodes && combiningEpisodes.link1) {
       if (isValidUrl(combiningEpisodes.link1)) {
-        setVideoSource(addAutoplayParams(combiningEpisodes.link1))
+        setVideoSource(addAdBlockParams(combiningEpisodes.link1))
         setIsLoading(false)
         return
       }
@@ -102,7 +106,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
     const trySetVideoSource = (url: string | undefined): boolean => {
       if (url && isValidUrl(url)) {
-        setVideoSource(addAutoplayParams(url))
+        setVideoSource(addAdBlockParams(url))
         setIsLoading(false)
         return true
       }
@@ -111,7 +115,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
     const tryDailyMotion = (): boolean => {
       if (anime.dailyMotionServer && isValidUrl(anime.dailyMotionServer)) {
-        setVideoSource(addAutoplayParams(anime.dailyMotionServer))
+        setVideoSource(addAdBlockParams(anime.dailyMotionServer))
         setIsLoading(false)
         return true
       }
@@ -154,6 +158,61 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     setIsLoading(false)
   }, [anime, currentServer, combiningEpisodes])
 
+  // Hàm thêm tham số chặn quảng cáo vào URL
+  const addAdBlockParams = (url: string): string => {
+    if (!adBlockEnabled) return url
+
+    try {
+      const urlObj = new URL(url)
+
+      // Các tham số để giảm quảng cáo
+      const adBlockParams = {
+        'autoplay': '1',
+        'mute': '0',
+        'controls': '1',
+        'modestbranding': '1', // YouTube
+        'rel': '0', // YouTube
+        'showinfo': '0', // YouTube
+        'iv_load_policy': '3', // YouTube
+        'disablekb': '0',
+        'fs': '1',
+        'playsinline': '1',
+        'widget': '1',
+        'app': 'embed'
+      }
+
+      Object.entries(adBlockParams).forEach(([key, value]) => {
+        urlObj.searchParams.set(key, value)
+      })
+
+      return urlObj.toString()
+    } catch {
+      return url
+    }
+  }
+
+  // Effect để chặn quảng cáo sau khi iframe load
+  useEffect(() => {
+    if (videoSource && adBlockEnabled) {
+      const timer = setTimeout(() => {
+        blockAdsAndPopups()
+      }, 2000) // Chờ 2 giây để iframe load xong
+
+      return () => clearTimeout(timer)
+    }
+  }, [videoSource, adBlockEnabled])
+
+  // Effect để ẩn ad block status sau 3s
+  useEffect(() => {
+    if (adBlockEnabled) {
+      setShowAdBlockStatus(true)
+      const timer = setTimeout(() => {
+        setShowAdBlockStatus(false)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [adBlockEnabled])
+
   // Function to validate URL
   const isValidUrl = (urlString: string): boolean => {
     try {
@@ -164,157 +223,208 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
   }
 
-  // Add autoplay params to video URL
-  const addAutoplayParams = (url: string): string => {
-    try {
-      const urlObj = new URL(url)
+  const blockAdsAndPopups = () => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        const iframeDoc = iframeRef.current.contentWindow.document
 
-      // Add autoplay and other params
-      urlObj.searchParams.set('autoplay', '1')
-      urlObj.searchParams.set('muted', '0') // Không mute để có sound
+        const adSelectors = [
+          '[id*="ad"]',
+          '[class*="ad"]',
+          '[class*="advertisement"]',
+          '[class*="popup"]',
+          '[class*="overlay"]',
+          '.ad-container',
+          '.ads',
+          '.advertisement',
+          '.popup-overlay',
+          '.modal-overlay'
+        ]
 
-      return urlObj.toString()
-    } catch {
-      return url
+        adSelectors.forEach(selector => {
+          const elements = iframeDoc.querySelectorAll(selector)
+          elements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.style.display = 'none !important'
+              el.remove()
+            }
+          })
+        })
+
+        // Chặn window.open (popup)
+        iframeRef.current.contentWindow.open = () => null
+
+        // Chặn các sự kiện click không mong muốn
+        iframeDoc.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement
+          if (target.tagName === 'A' && target.getAttribute('target') === '_blank') {
+            e.preventDefault()
+            e.stopPropagation()
+          }
+        }, true)
+
+      } catch {
+        // Cross-origin restrictions - không thể truy cập iframe content
+        console.log('Cannot access iframe content due to CORS policy')
+      }
     }
   }
 
   const isLoadvid = videoSource?.includes('loadvid') || false
+  const isVevocloud = videoSource?.includes('vevocloud') || false
 
-  // Monitor và đóng popup ads + detect redirects
+  // 🔥 NUCLEAR OPTION: Transparent Overlay + RAF Focus Loop
   useEffect(() => {
+    if (!adBlockEnabled) return
+
     let isComponentMounted = true
-    let initialWindowCount = window.length
 
-    // Aggressive popup monitoring - Check every 50ms
-    const popupChecker = setInterval(() => {
-      if (!isComponentMounted) return
-
-      // Check for new windows by counting
-      if (window.length > initialWindowCount) {
-        setPopupBlocked(prev => prev + 1)
-        initialWindowCount = window.length
-      }
-
-      // Lọc các window đã đóng
-      popupWindowsRef.current = popupWindowsRef.current.filter(win => !win.closed)
-
-      // Đóng tất cả popup windows ngay lập tức
-      popupWindowsRef.current.forEach(win => {
-        try {
-          if (!win.closed) {
-            win.close()
-            setPopupBlocked(prev => prev + 1)
-          }
-        } catch {
-          // Ignore errors
-        }
-      })
-
-      // Try to close any popup window that might have been opened
-      // This catches popups we couldn't track via window.open override
-      try {
-        if (window.opener) {
-          window.close()
-        }
-      } catch {
-        // Ignore
-      }
-    }, 50) // Faster checking (50ms thay vì 100ms)
-
-    // Override window.open globally để track và block popups
+    // 1. Override window.open - ALWAYS return null
     const originalWindowOpen = window.open
-    window.open = function (...args) {
-      // Try to prevent popup completely
+    window.open = function () {
       setPopupBlocked(prev => prev + 1)
+      // Immediate focus back
+      window.focus()
+      requestAnimationFrame(() => window.focus())
+      return null // Don't open anything
+    }
+
+    // 2. 🚀 RAF Focus Loop - Smoother than setInterval
+    const focusLoop = () => {
+      if (!isComponentMounted) return
       
-      const newWindow = originalWindowOpen.apply(this, args)
-      if (newWindow) {
-        popupWindowsRef.current.push(newWindow)
-        
-        // Close immediately (0ms)
-        try {
-          newWindow.close()
-        } catch {
-          // If immediate close fails, try again after 10ms
-          setTimeout(() => {
+      const timeSinceInteraction = Date.now() - lastInteractionRef.current
+      const activeWindow = isMobile ? 5000 : 3000 // Longer for mobile
+      
+      if (timeSinceInteraction < activeWindow) {
+        if (document.hidden || !document.hasFocus()) {
+          setPopupBlocked(prev => prev + 1)
+          
+          // Desktop: window.focus() works
+          if (!isMobile) {
+            window.focus()
+          } else {
+            // Mobile: Try alternative methods
             try {
-              if (newWindow && !newWindow.closed) {
-                newWindow.close()
+              // Method 1: Try to scroll (brings focus back on some browsers)
+              window.scrollTo(window.scrollX, window.scrollY)
+              
+              // Method 2: Try to focus on document
+              if (document.body) {
+                document.body.focus()
               }
+              
+              // Method 3: Dispatch focus event
+              window.dispatchEvent(new Event('focus'))
             } catch {
               // Ignore errors
             }
-          }, 10)
+          }
         }
       }
       
-      // Return null to indicate popup was blocked
-      return null
+      rafRef.current = requestAnimationFrame(focusLoop)
     }
+    rafRef.current = requestAnimationFrame(focusLoop)
 
-    // Detect blur events (tab switch / redirect) - AGGRESSIVE MODE
-    const handleBlur = () => {
-      // Always block blur during video watching (aggressive mode)
-      setPopupBlocked(prev => prev + 1)
-      
-      // Focus back IMMEDIATELY
-      if (isComponentMounted) {
-        window.focus()
-      }
-    }
-
-    // Detect visibility change - AGGRESSIVE MODE
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Tab bị hidden → có thể là popup/redirect
+    // 3. Instant blur detection - Focus back IMMEDIATELY
+    const handleBlur = (e: FocusEvent) => {
+      const timeSinceInteraction = Date.now() - lastInteractionRef.current
+      if (timeSinceInteraction < 2000) { // Within 2s of click
+        e.preventDefault()
+        e.stopPropagation()
         setPopupBlocked(prev => prev + 1)
         
-        // Try multiple times to focus back
-        const focusAttempts = [0, 50, 100, 200]
-        focusAttempts.forEach(delay => {
-          setTimeout(() => {
-            if (!document.hidden && isComponentMounted) {
-              window.focus()
-            }
-          }, delay)
-        })
+        // Immediate focus back - RAF for smoothness
+        window.focus()
+        requestAnimationFrame(() => window.focus())
+        setTimeout(() => window.focus(), 0)
+        setTimeout(() => window.focus(), 10)
+        setTimeout(() => window.focus(), 20)
       }
     }
 
-    // Prevent beforeunload redirects
+    // 4. Visibility change - Focus back when tab becomes hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const timeSinceInteraction = Date.now() - lastInteractionRef.current
+        if (timeSinceInteraction < 2000) { // Within 2s of click
+          setPopupBlocked(prev => prev + 1)
+          
+          // RAF + setTimeout combo
+          requestAnimationFrame(() => window.focus())
+          setTimeout(() => window.focus(), 0)
+          setTimeout(() => window.focus(), 50)
+          setTimeout(() => window.focus(), 100)
+        }
+      }
+    }
+
+    // 5. Prevent page unload during interaction
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       const timeSinceInteraction = Date.now() - lastInteractionRef.current
-      if (timeSinceInteraction < 3000) {
-        // Might be unwanted redirect
+      if (timeSinceInteraction < 1000) { // Within 1s - likely unwanted redirect
         e.preventDefault()
         e.returnValue = ''
         setPopupBlocked(prev => prev + 1)
       }
     }
 
-    window.addEventListener('blur', handleBlur, { capture: true })
-    document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true })
-    window.addEventListener('beforeunload', handleBeforeUnload, { capture: true })
+    // 6. Block ALL clicks during overlay (catch target="_blank" links)
+    const blockClicks = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // Check if clicking on a link or inside iframe
+      if (target.tagName === 'A' || target.closest('a') || target.tagName === 'IFRAME') {
+        const timeSinceInteraction = Date.now() - lastInteractionRef.current
+        if (timeSinceInteraction < 500) { // Very recent click - might be ad
+          const link = target.tagName === 'A' ? target : target.closest('a')
+          if (link && (link as HTMLAnchorElement).target === '_blank') {
+            e.preventDefault()
+            e.stopPropagation()
+            e.stopImmediatePropagation()
+            setPopupBlocked(prev => prev + 1)
+          }
+        }
+      }
+    }
+
+    window.addEventListener('blur', handleBlur, true)
+    document.addEventListener('visibilitychange', handleVisibilityChange, true)
+    window.addEventListener('beforeunload', handleBeforeUnload, true)
+    document.addEventListener('click', blockClicks, true)
 
     return () => {
       isComponentMounted = false
-      clearInterval(popupChecker)
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
       window.open = originalWindowOpen
       window.removeEventListener('blur', handleBlur)
       window.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('beforeunload', handleBeforeUnload)
-
-      // Đóng tất cả popups khi unmount
-      popupWindowsRef.current.forEach(win => {
-        try {
-          if (!win.closed) win.close()
-        } catch {
-          // Ignore
-        }
-      })
+      document.removeEventListener('click', blockClicks)
     }
-  }, [isLoadvid])
+  }, [videoSource, adBlockEnabled])
+
+  // 🛡️ Overlay Protection: Show overlay for first few clicks on loadvid/vevocloud
+  useEffect(() => {
+    if (!videoSource || !adBlockEnabled) return
+    
+    const needsOverlay = isLoadvid || isVevocloud
+    
+    // 📱 Mobile needs MORE clicks because focus() doesn't work well
+    let requiredClicks = 0
+    if (isLoadvid) {
+      requiredClicks = isMobile ? 5 : 3  // 5 for mobile, 3 for desktop
+    } else if (isVevocloud) {
+      requiredClicks = isMobile ? 3 : 2  // 3 for mobile, 2 for desktop
+    }
+    
+    if (needsOverlay && requiredClicks > 0) {
+      setShowOverlay(true)
+      setOverlayClicks(0)
+    }
+  }, [videoSource, adBlockEnabled, isLoadvid, isVevocloud, isMobile])
 
   // Reset popup counter khi đổi video
   useEffect(() => {
@@ -329,13 +439,14 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     const handleInteraction = () => {
       lastInteractionRef.current = Date.now()
       setIsUserInteracting(true)
+      
       // Reset sau 2s
       setTimeout(() => setIsUserInteracting(false), 2000)
     }
 
-    playerElement.addEventListener('click', handleInteraction)
-    playerElement.addEventListener('mousedown', handleInteraction)
-    playerElement.addEventListener('touchstart', handleInteraction)
+    playerElement.addEventListener('click', handleInteraction, { capture: true })
+    playerElement.addEventListener('mousedown', handleInteraction, { capture: true })
+    playerElement.addEventListener('touchstart', handleInteraction, { capture: true })
 
     return () => {
       playerElement.removeEventListener('click', handleInteraction)
@@ -409,18 +520,16 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
       <div ref={playerRef} className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
         {/* Video iframe */}
         {videoSource ? (
-          <>
-            <iframe
-              ref={iframeRef}
-              src={videoSource}
-              className="w-full h-full"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox"
-              referrerPolicy="no-referrer"
-              loading="lazy"
-            />
-          </>
+          <iframe
+            ref={iframeRef}
+            src={videoSource}
+            className="w-full h-full"
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="no-referrer"
+            onLoad={adBlockEnabled ? blockAdsAndPopups : undefined}
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black text-white">
             {isLoading ? (
@@ -436,10 +545,88 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
         {/* Copyright Notice */}
         {episode && episode.copyright && (
-          <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded z-20">
+          <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
             {episode.copyright}
           </div>
         )}
+
+        {/* Ad Block Status - Enhanced */}
+        {adBlockEnabled && (
+          <div
+            className={cn(
+              "absolute top-4 left-4 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 transition-opacity duration-300",
+              showAdBlockStatus ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <Shield className="h-3.5 w-3.5 animate-pulse" />
+            <span className="font-semibold">Ad Block Active</span>
+          </div>
+        )}
+
+        {/* 🛡️ Transparent Overlay - Eats first clicks to prevent popups */}
+        {showOverlay && videoSource && (() => {
+          const requiredClicks = isLoadvid 
+            ? (isMobile ? 5 : 3) 
+            : (isVevocloud ? (isMobile ? 3 : 2) : 0)
+          
+          const handleOverlayInteraction = (e: React.MouseEvent | React.TouchEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            
+            const newClickCount = overlayClicks + 1
+            setOverlayClicks(newClickCount)
+            setPopupBlocked(prev => prev + 1)
+            
+            if (newClickCount >= requiredClicks) {
+              setShowOverlay(false)
+              setOverlayClicks(0)
+            }
+            
+            // Track interaction
+            lastInteractionRef.current = Date.now()
+          }
+          
+          return (
+            <div
+              className="absolute inset-0 z-50 cursor-pointer bg-black/10 backdrop-blur-[1px] flex items-center justify-center"
+              onClick={handleOverlayInteraction}
+              onTouchEnd={handleOverlayInteraction}
+              onTouchStart={(e) => {
+                e.preventDefault()
+                lastInteractionRef.current = Date.now()
+              }}
+            >
+              <div className="bg-blue-600/95 text-white px-6 py-4 rounded-xl shadow-2xl text-center backdrop-blur-sm max-w-xs">
+                <Shield className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                <p className="text-sm font-bold mb-1">
+                  {isLoadvid ? "🛡️ Chặn quảng cáo Loadvid" : "🛡️ Chặn quảng cáo"}
+                </p>
+                <p className="text-xs opacity-90 mb-1">
+                  {isMobile ? "Tap" : "Click"} {requiredClicks} lần để tiếp tục
+                </p>
+                {isMobile && (
+                  <p className="text-[10px] opacity-75 mb-2">
+                    (Mobile cần nhiều {isMobile ? "tap" : "click"} hơn)
+                  </p>
+                )}
+                <div className="mt-2 flex gap-1.5 justify-center flex-wrap">
+                  {Array.from({ length: requiredClicks }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all",
+                        i < overlayClicks ? "bg-white scale-125" : "bg-white/30"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 text-xs opacity-80">
+                  {overlayClicks}/{requiredClicks}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Controls */}
@@ -464,20 +651,33 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           ))}
         </div>
 
-        {/* Report & Info */}
-        <div className="flex item-center gap-2">
+        {/* Protection Status & Report */}
+        <div className="flex items-center gap-2">
           {/* Popup Blocked Counter */}
           {popupBlocked > 0 && (
             <div className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-md">
               <Shield className="h-3.5 w-3.5 animate-pulse" />
-              <div className="flex flex-col">
-                <span className="font-semibold">{popupBlocked} ads chặn</span>
-                {isUserInteracting && (
-                  <span className="text-[10px] opacity-80">Đang bảo vệ...</span>
-                )}
+              <div className="flex flex-col leading-tight">
+                <span className="font-bold">{popupBlocked} popup{popupBlocked > 1 ? 's' : ''}</span>
+                <span className="text-[10px] opacity-90">đã chặn</span>
               </div>
             </div>
           )}
+
+          {/* Ad Block Toggle (Compact) */}
+          <button
+            onClick={() => setAdBlockEnabled(!adBlockEnabled)}
+            className={cn(
+              "flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm",
+              adBlockEnabled
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-red-500 text-white hover:bg-red-600"
+            )}
+            title={adBlockEnabled ? "Tắt chặn quảng cáo" : "Bật chặn quảng cáo"}
+          >
+            <Shield className={cn("h-3.5 w-3.5 mr-1", adBlockEnabled && "animate-pulse")} />
+            {adBlockEnabled ? "ON" : "OFF"}
+          </button>
 
           {/* Report Button */}
           <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
