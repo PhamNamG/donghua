@@ -57,12 +57,10 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   const [adBlockEnabled, setAdBlockEnabled] = useState(true)
   const [showAdBlockStatus, setShowAdBlockStatus] = useState(true)
   const [popupBlocked, setPopupBlocked] = useState(0)
-  const [isUserInteracting, setIsUserInteracting] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
   const [overlayClicks, setOverlayClicks] = useState(0)
   const playerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const popupWindowsRef = useRef<Window[]>([])
   const lastInteractionRef = useRef<number>(0)
   const rafRef = useRef<number | null>(null)
   const { mutate: createReport, isPending: isReporting, isError: isReportError, reset: resetReport } = useCreateReport()
@@ -438,10 +436,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
     const handleInteraction = () => {
       lastInteractionRef.current = Date.now()
-      setIsUserInteracting(true)
       
-      // Reset sau 2s
-      setTimeout(() => setIsUserInteracting(false), 2000)
     }
 
     playerElement.addEventListener('click', handleInteraction, { capture: true })
