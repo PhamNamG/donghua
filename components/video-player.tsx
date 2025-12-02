@@ -484,68 +484,14 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
               >
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-8 py-4 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-md">
-                    {isLoadvid || (isMobile && videoSource?.includes('vevocloud')) ? (
-                      // Warning for problematic servers on mobile or loadvid
+                    {(isLoadvid || videoSource?.includes('vevocloud')) ? (
+                      // Soft warning cho servers có ads
                       <>
-                        <div className="flex items-center gap-3 mb-3">
-                          <Shield className="w-6 h-6 text-red-500 dark:text-red-400" />
+                        <div className="flex items-center gap-3 mb-2">
+                          <Shield className="w-6 h-6 animate-pulse text-orange-500 dark:text-orange-400" />
                           <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                            {isMobile ? '📱 Mobile: Server không được hỗ trợ tốt' : '⚠️ Server có nhiều quảng cáo'}
+                            {isMobile ? 'Tap' : 'Click'} để xem video
                           </span>
-                        </div>
-
-                        <div className="text-sm space-y-2">
-                          <p className="text-gray-700 dark:text-gray-300">
-                            {isMobile 
-                              ? 'Mobile browsers không thể chặn popup ads từ server này'
-                              : 'Server này có quá nhiều popup ads khó chặn'
-                            }
-                          </p>
-
-                          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 rounded-lg mt-3">
-                            <p className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
-                              💡 {isMobile ? 'Khuyến nghị (Mobile):' : 'Giải pháp:'}
-                            </p>
-                            <ul className="text-xs space-y-1 text-left text-gray-700 dark:text-gray-300">
-                              {isMobile ? (
-                                <>
-                                  <li>
-                                    ⭐ Chuyển sang <span className="font-semibold text-green-600 dark:text-green-400">Vietsub #1</span> - Không ads
-                                  </li>
-                                  <li>
-                                    • Hoặc dùng <span className="font-semibold text-blue-600 dark:text-blue-400">Brave Browser</span> (built-in ad blocker)
-                                  </li>
-                                  <li>
-                                    • Hoặc <span className="font-semibold text-blue-600 dark:text-blue-400">Kiwi Browser</span> + uBlock Origin
-                                  </li>
-                                </>
-                              ) : (
-                                <>
-                                  <li>
-                                    • Chuyển sang <span className="font-semibold text-gray-900 dark:text-white">các server còn lại</span> - Không ads
-                                  </li>
-                                  <li>
-                                    • Hoặc <span className="font-semibold text-gray-900 dark:text-white">Vietsub #2</span> - Ít ads hơn
-                                  </li>
-                                  <li>
-                                    • Hoặc cài <span className="font-semibold text-gray-900 dark:text-white">uBlock Origin</span> extension
-                                  </li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-
-                          {!isMobile && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setShowOverlay(false)
-                              }}
-                              className="w-full mt-3 bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white text-white dark:text-gray-900 font-semibold py-2 px-4 rounded pointer-events-auto transition-colors shadow-md"
-                            >
-                              Tôi hiểu, vẫn muốn xem
-                            </button>
-                          )}
                         </div>
                       </>
                     ) : (
