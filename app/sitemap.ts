@@ -9,6 +9,8 @@ interface Category {
   products: Product[];
 }
 
+
+
 export default async function sitemap() {
   const categorys: { data: Category[] } = await fetchCategorySitemap(); 
 

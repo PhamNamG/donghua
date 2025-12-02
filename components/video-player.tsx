@@ -68,6 +68,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
 
   // State to track if component has mounted
   const [hasMounted, setHasMounted] = useState(false)
+
+
   // Effect to set initial server preference
   useEffect(() => {
     if (!hasMounted && anime) {
@@ -85,6 +87,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
       setVideoSource(null)
       return
     }
+
 
     setIsLoading(true)
 
