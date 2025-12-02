@@ -424,58 +424,71 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
                 className="absolute inset-0 z-30 cursor-pointer bg-black/0 hover:bg-black/5 transition-colors"
                 onClick={handleOverlayClick}
               >
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="bg-primary/95 text-primary-foreground px-8 py-4 rounded-xl shadow-2xl border-2 border-primary-foreground/20 backdrop-blur-sm max-w-md">
-                    {isLoadvid ? (
-                      // loadvid warning
-                      <>
-                        <div className="flex items-center gap-3 mb-3">
-                          <Shield className="w-6 h-6 text-yellow-300" />
-                          <span className="text-lg font-bold">⚠️ Server có nhiều quảng cáo</span>
-                        </div>
-                        <div className="text-sm space-y-2">
-                          <p className="text-yellow-200">
-                            Server này có quá nhiều popup ads khó chặn
-                          </p>
-                          <div className="bg-black/20 p-3 rounded-lg mt-3">
-                            <p className="font-semibold mb-2">💡 Giải pháp:</p>
-                            <ul className="text-xs space-y-1 text-left">
-                              <li>• Chuyển sang <span className="text-green-300 font-semibold">các server còn lại</span> - Không ads</li>
-                              <li>• Hoặc <span className="text-green-300 font-semibold">Vietsub #2</span> - Ít ads hơn</li>
-                              <li>• Hoặc cài <span className="text-blue-300 font-semibold">uBlock Origin</span> extension</li>
-                            </ul>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setShowOverlay(false)
-                            }}
-                            className="w-full mt-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded pointer-events-auto transition-colors"
-                          >
-                            Tôi hiểu, vẫn muốn xem
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      // vevocloud normal flow
-                      <>
-                        <div className="flex items-center gap-3 mb-2">
-                          <Shield className="w-6 h-6 animate-pulse" />
-                          <span className="text-lg font-bold">Click để xem video</span>
-                        </div>
-                        <div className="text-sm opacity-90 text-center">
-                          {clickCount === 0 ? (
-                            <p>Click {requiredClicks} lần để chặn popup ads</p>
-                          ) : clickCount < requiredClicks ? (
-                            <p className="text-green-200 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
-                          ) : (
-                            <p className="text-green-300 font-bold">✓ Đã chặn xong!</p>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+  <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-8 py-4 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-md">
+    {isLoadvid ? (
+      // loadvid warning
+      <>
+        <div className="flex items-center gap-3 mb-3">
+          <Shield className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            ⚠️ Server có nhiều quảng cáo
+          </span>
+        </div>
+        
+        <div className="text-sm space-y-2">
+          <p className="text-gray-700 dark:text-gray-300">
+            Server này có quá nhiều popup ads khó chặn
+          </p>
+          
+          <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 p-3 rounded-lg mt-3">
+            <p className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+              💡 Giải pháp:
+            </p>
+            <ul className="text-xs space-y-1 text-left text-gray-700 dark:text-gray-300">
+              <li>
+                • Chuyển sang <span className="font-semibold text-gray-900 dark:text-white">các server còn lại</span> - Không ads
+              </li>
+              <li>
+                • Hoặc <span className="font-semibold text-gray-900 dark:text-white">Vietsub #2</span> - Ít ads hơn
+              </li>
+              <li>
+                • Hoặc cài <span className="font-semibold text-gray-900 dark:text-white">uBlock Origin</span> extension
+              </li>
+            </ul>
+          </div>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowOverlay(false)
+            }}
+            className="w-full mt-3 bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white text-white dark:text-gray-900 font-semibold py-2 px-4 rounded pointer-events-auto transition-colors shadow-md"
+          >
+            Tôi hiểu, vẫn muốn xem
+          </button>
+        </div>
+      </>
+    ) : (
+      // vevocloud normal flow
+      <>
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="w-6 h-6 animate-pulse" />
+          <span className="text-lg font-bold">Click để xem video</span>
+        </div>
+        <div className="text-sm text-gray-700 dark:text-gray-300 text-center">
+          {clickCount === 0 ? (
+            <p>Click {requiredClicks} lần để chặn popup ads</p>
+          ) : clickCount < requiredClicks ? (
+            <p className="text-gray-900 dark:text-gray-100 font-semibold">Còn {requiredClicks - clickCount} click nữa...</p>
+          ) : (
+            <p className="text-gray-900 dark:text-gray-100 font-bold">✓ Đã chặn xong!</p>
+          )}
+        </div>
+      </>
+    )}
+  </div>
+</div>
               </div>
             )}
           </>
