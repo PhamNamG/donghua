@@ -578,7 +578,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             className="w-full h-full"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox={isVevocloud ? "allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox " : "allow-scripts allow-same-origin allow-presentation allow-forms"}
+            sandbox={"allow-scripts allow-same-origin allow-presentation allow-forms allow-popups allow-popups-to-escape-sandbox"}
             referrerPolicy="no-referrer"
             onLoad={adBlockEnabled ? blockAdsAndPopups : undefined}
           />
