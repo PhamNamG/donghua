@@ -314,7 +314,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             referrerPolicy="no-referrer"
-            sandbox="allow-ads allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-black text-white">
