@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Monitor, Cloud, Link, Flag, X, AlertTriangle, Download } from "lucide-react"
+import { Monitor, Cloud, Link, Flag, X, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCreateReport } from "@/hooks/useReport"
 import { Button } from "@/components/ui/button"
