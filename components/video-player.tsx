@@ -225,6 +225,22 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   }
 
   const blockAdsAndPopups = () => {
+    // 🎯 XÓA #dontfoid TỪ DOCUMENT CHÍNH (nằm ngoài iframe)
+    const dontfoidElement = document.getElementById('dontfoid')
+    if (dontfoidElement) {
+      dontfoidElement.remove()
+      console.log('🗑️ Removed #dontfoid on iframe load')
+      setPopupBlocked(prev => prev + 1)
+    }
+
+    // Xóa tất cả elements có id chứa "dontfoid"
+    document.querySelectorAll('[id*="dontfoid"]').forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.remove()
+        setPopupBlocked(prev => prev + 1)
+      }
+    })
+
     if (iframeRef.current && iframeRef.current.contentWindow) {
       try {
         const iframeDoc = iframeRef.current.contentWindow.document
@@ -271,6 +287,92 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     }
   }
 
+  // 🔄 Continuous monitoring để xóa #dontfoid liên tục (TRONG iframe document)
+  useEffect(() => {
+    if (!adBlockEnabled || !videoSource) return
+    
+    // Chỉ cho loadvid và vevocloud
+    const isLoadvid = videoSource?.includes('loadvid') || false
+    const isVevocloud = videoSource?.includes('vevocloud') || false
+    if (!isLoadvid && !isVevocloud) return
+
+    const removeDontfoid = () => {
+      // 🎯 1. XÓA TỪ DOCUMENT CHÍNH (phòng trường hợp nằm ngoài)
+      const dontfoidMain = document.getElementById('dontfoid')
+      if (dontfoidMain) {
+        dontfoidMain.remove()
+        console.log('🗑️ Removed #dontfoid from main document')
+        setPopupBlocked(prev => prev + 1)
+      }
+
+      document.querySelectorAll('[id*="dontfoid"]').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.remove()
+          setPopupBlocked(prev => prev + 1)
+        }
+      })
+
+      // 🎯 2. XÓA TỪ TRONG IFRAME DOCUMENT
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        try {
+          const iframeDoc = iframeRef.current.contentWindow.document
+          
+          // Xóa #dontfoid
+          const dontfoidIframe = iframeDoc.getElementById('dontfoid')
+          if (dontfoidIframe) {
+            dontfoidIframe.remove()
+            console.log('🗑️ Removed #dontfoid from IFRAME document')
+            setPopupBlocked(prev => prev + 1)
+          }
+
+          // Xóa tất cả elements có id chứa "dontfoid"
+          iframeDoc.querySelectorAll('[id*="dontfoid"]').forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.remove()
+              console.log('🗑️ Removed [id*="dontfoid"] from IFRAME')
+              setPopupBlocked(prev => prev + 1)
+            }
+          })
+
+          // Xóa các overlay có z-index max
+          iframeDoc.querySelectorAll('[style*="z-index: 2147483647"]').forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.remove()
+              console.log('🗑️ Removed high z-index overlay from IFRAME')
+              setPopupBlocked(prev => prev + 1)
+            }
+          })
+
+          // Xóa các div fixed transparent (ad overlays)
+          iframeDoc.querySelectorAll('div[style*="position: fixed"][style*="background-color: transparent"]').forEach(el => {
+            if (el instanceof HTMLElement) {
+              // Check nếu là overlay toàn màn hình
+              const style = el.getAttribute('style') || ''
+              if (style.includes('top: 0') || style.includes('left: 0') || style.includes('width:') && style.includes('height:')) {
+                el.remove()
+                console.log('🗑️ Removed transparent fixed overlay from IFRAME')
+                setPopupBlocked(prev => prev + 1)
+              }
+            }
+          })
+
+        } catch (e) {
+          // CORS - không thể truy cập iframe content
+          // Thử dùng MutationObserver trên parent
+        }
+      }
+    }
+
+    // Chạy ngay lập tức
+    removeDontfoid()
+
+    // Kiểm tra mỗi 50ms (rất nhanh để catch ngay khi inject)
+    const intervalId = setInterval(removeDontfoid, 50)
+
+    // Cleanup
+    return () => clearInterval(intervalId)
+  }, [adBlockEnabled, videoSource])
+
   const isLoadvid = videoSource?.includes('loadvid') || false
   const isVevocloud = videoSource?.includes('vevocloud') || false
   const [isPlayerVisible, setIsPlayerVisible] = useState(false)
@@ -308,37 +410,147 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     return () => observer.disconnect()
   }, [])
 
-  // 🔥 Layer 2: Block window.location redirects
+  // 🔥 Layer 2: AGGRESSIVE Block all navigation/redirects (Mobile + Desktop)
   useEffect(() => {
     if (!adBlockEnabled || !isPlayerVisible) return
+    if (!isLoadvid && !isVevocloud) return // Only for suspicious servers
 
-    const originalLocation = window.location
-    let locationBlocked = false
+    const currentUrl = window.location.href
+    let redirectBlocked = false
 
-    try {
-      Object.defineProperty(window, 'location', {
-        get: () => originalLocation,
-        set: (value) => {
-          const timeSinceInteraction = Date.now() - lastInteractionRef.current
-          if (timeSinceInteraction < 2000 && !locationBlocked) {
-            locationBlocked = true
-            setPopupBlocked(prev => prev + 1)
-            console.log('🛡️ Blocked redirect to:', value)
-            return false
-          }
-          originalLocation.href = value
-        },
-        configurable: true
-      })
-    } catch {
-      // Some browsers don't allow redefining location
-      console.log('Cannot redefine window.location')
+    // 1. Override history methods to block pushState/replaceState redirects
+    const originalPushState = history.pushState.bind(history)
+    const originalReplaceState = history.replaceState.bind(history)
+
+    history.pushState = function(...args) {
+      const url = args[2]
+      if (url && url.toString() !== currentUrl && !url.toString().includes(window.location.host)) {
+        console.log('🛡️ [MOBILE] Blocked pushState redirect:', url)
+        setPopupBlocked(prev => prev + 1)
+        return
+      }
+      return originalPushState.apply(this, args)
     }
+
+    history.replaceState = function(...args) {
+      const url = args[2]
+      if (url && url.toString() !== currentUrl && !url.toString().includes(window.location.host)) {
+        console.log('🛡️ [MOBILE] Blocked replaceState redirect:', url)
+        setPopupBlocked(prev => prev + 1)
+        return
+      }
+      return originalReplaceState.apply(this, args)
+    }
+
+    // 2. Monitor popstate for back/forward manipulation
+    const handlePopState = (e: PopStateEvent) => {
+      if (window.location.href !== currentUrl) {
+        console.log('🛡️ [MOBILE] Detected navigation, restoring URL')
+        e.preventDefault()
+        setPopupBlocked(prev => prev + 1)
+        // Push back to current URL
+        history.pushState(null, '', currentUrl)
+      }
+    }
+
+    // 3. Block hashchange redirects
+    const handleHashChange = (e: HashChangeEvent) => {
+      if (!e.newURL.includes(window.location.host)) {
+        console.log('🛡️ [MOBILE] Blocked hash redirect:', e.newURL)
+        e.preventDefault()
+        setPopupBlocked(prev => prev + 1)
+        window.location.hash = ''
+      }
+    }
+
+    // 4. Aggressive touch blocking for mobile links
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement
+      const link = target.closest('a')
+      
+      if (link) {
+        const href = link.getAttribute('href')
+        const target_attr = link.getAttribute('target')
+        
+        // Block external links and _blank links
+        if (href && (
+          target_attr === '_blank' ||
+          !href.startsWith(window.location.origin) && !href.startsWith('/') && !href.startsWith('#')
+        )) {
+          e.preventDefault()
+          e.stopPropagation()
+          setPopupBlocked(prev => prev + 1)
+          console.log('🛡️ [MOBILE] Blocked touch on external link:', href)
+        }
+      }
+    }
+
+    // 5. Override window.location methods
+    try {
+      const originalAssign = window.location.assign.bind(window.location)
+      const originalReplace = window.location.replace.bind(window.location)
+
+      window.location.assign = function(url: string) {
+        if (!url.includes(window.location.host)) {
+          console.log('🛡️ [MOBILE] Blocked location.assign:', url)
+          setPopupBlocked(prev => prev + 1)
+          return
+        }
+        return originalAssign(url)
+      }
+
+      window.location.replace = function(url: string) {
+        if (!url.includes(window.location.host)) {
+          console.log('🛡️ [MOBILE] Blocked location.replace:', url)
+          setPopupBlocked(prev => prev + 1)
+          return
+        }
+        return originalReplace(url)
+      }
+    } catch {
+      console.log('Cannot override location methods')
+    }
+
+    // 6. Block by modifying href setter (modern approach)
+    try {
+      const locationDescriptor = Object.getOwnPropertyDescriptor(window, 'location')
+      if (locationDescriptor && locationDescriptor.configurable !== false) {
+        let internalHref = window.location.href
+        
+        Object.defineProperty(window.location, 'href', {
+          get: () => internalHref,
+          set: (value: string) => {
+            if (!value.includes(window.location.host) && !redirectBlocked) {
+              redirectBlocked = true
+              console.log('🛡️ [MOBILE] Blocked href redirect:', value)
+              setPopupBlocked(prev => prev + 1)
+              
+              // Reset after 1 second
+              setTimeout(() => { redirectBlocked = false }, 1000)
+              return
+            }
+            internalHref = value
+            window.location.replace(value)
+          },
+          configurable: true
+        })
+      }
+    } catch {
+      console.log('Cannot redefine location.href')
+    }
+
+    window.addEventListener('popstate', handlePopState, true)
+    window.addEventListener('hashchange', handleHashChange, true)
+    document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false })
 
     return () => {
-      // Note: Cannot restore original location property in all browsers
+      history.pushState = originalPushState
+      history.replaceState = originalReplaceState
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('hashchange', handleHashChange)
+      document.removeEventListener('touchstart', handleTouchStart)
     }
-  }, [adBlockEnabled, isPlayerVisible])
+  }, [adBlockEnabled, isPlayerVisible, isLoadvid, isVevocloud])
 
   // 🔥 Layer 3: Main Popup Blocking - RAF Focus Loop
   useEffect(() => {
@@ -483,8 +695,12 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
     return () => clearTimeout(delayTimer)
   }, [videoSource])
 
-  // Determine required clicks based on server
-  const requiredClicks = isLoadvid ? 3 : (isVevocloud ? 2 : 0)
+  // Determine required clicks based on server (more clicks for mobile)
+  const requiredClicks = isLoadvid 
+    ? (isMobile ? 5 : 3) 
+    : (isVevocloud 
+        ? (isMobile ? 4 : 2) 
+        : 0)
 
   // Track user interaction với player
   useEffect(() => {
@@ -610,14 +826,16 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           </div>
         )}
 
-        {/* 🥷 INVISIBLE Click Eater - Eats first clicks silently */}
+        {/* 🥷 INVISIBLE Click Eater - Eats first clicks/taps silently */}
         {clickEaterActive && videoSource && requiredClicks > 0 && (
           <div
             className="absolute inset-0 z-40 cursor-pointer"
             style={{ 
               pointerEvents: eatenClicks < requiredClicks ? 'auto' : 'none',
-              background: 'transparent' // Completely invisible
+              background: 'transparent', // Completely invisible
+              touchAction: 'manipulation' // Prevent double-tap zoom, etc.
             }}
+            // Block all mouse events
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -633,24 +851,55 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
                 setClickEaterActive(false)
               }
               
-              // Track interaction
               lastInteractionRef.current = Date.now()
             }}
-            onTouchEnd={(e) => {
+            onMouseDown={(e) => {
               e.preventDefault()
+              e.stopPropagation()
+            }}
+            onMouseUp={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            // Block all touch events for mobile
+            onTouchStart={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
               
+              // Eat on touch START to prevent any propagation
               const newCount = eatenClicks + 1
               setEatenClicks(newCount)
               setPopupBlocked(prev => prev + 1)
               
-              console.log(`🥷 [SILENT] Ate touch ${newCount}/${requiredClicks}`)
+              console.log(`🥷 [MOBILE] Ate touch ${newCount}/${requiredClicks}`)
               
               if (newCount >= requiredClicks) {
-                console.log('🥷 [SILENT] Click eater deactivated, video accessible')
+                console.log('🥷 [MOBILE] Click eater deactivated, video accessible')
                 setClickEaterActive(false)
               }
               
               lastInteractionRef.current = Date.now()
+            }}
+            onTouchMove={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onTouchCancel={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            // Block pointer events (covers both mouse and touch)
+            onPointerDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onPointerUp={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
             }}
           />
         )}
