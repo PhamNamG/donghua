@@ -356,7 +356,7 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             }
           })
 
-        } catch (e) {
+        } catch {
           // CORS - không thể truy cập iframe content
           // Thử dùng MutationObserver trên parent
         }
