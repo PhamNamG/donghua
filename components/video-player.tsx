@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Monitor, Cloud, Link, Flag, X, AlertTriangle } from "lucide-react"
+import { Monitor, Cloud, Link, Flag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCreateReport } from "@/hooks/useReport"
 import { Button } from "@/components/ui/button"
@@ -64,29 +64,29 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   // State to track if component has mounted
   const [hasMounted, setHasMounted] = useState(false)
   
-  // State for ad warning popup
-  const [showAdWarning, setShowAdWarning] = useState(false)
+  // // State for ad warning popup
+  // const [showAdWarning, setShowAdWarning] = useState(false)
 
-  // Check localStorage for ad warning dismissal
-  useEffect(() => {
-    const dismissed = localStorage.getItem('adWarningDismissed')
-    const dismissedTime = dismissed ? parseInt(dismissed) : 0
-    const now = Date.now()
+  // // Check localStorage for ad warning dismissal
+  // useEffect(() => {
+  //   const dismissed = localStorage.getItem('adWarningDismissed')
+  //   const dismissedTime = dismissed ? parseInt(dismissed) : 0
+  //   const now = Date.now()
     
-    // Show popup if never dismissed or dismissed more than 24 hours ago
-    if (!dismissed || (now - dismissedTime) > 24 * 60 * 60 * 1000) {
-      // Delay showing popup by 3 seconds
-      const timer = setTimeout(() => {
-        setShowAdWarning(true)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [])
+  //   // Show popup if never dismissed or dismissed more than 24 hours ago
+  //   if (!dismissed || (now - dismissedTime) > 24 * 60 * 60 * 1000) {
+  //     // Delay showing popup by 3 seconds
+  //     const timer = setTimeout(() => {
+  //       setShowAdWarning(true)
+  //     }, 3000)
+  //     return () => clearTimeout(timer)
+  //   }
+  // }, [])
 
-  const dismissAdWarning = () => {
-    setShowAdWarning(false)
-    localStorage.setItem('adWarningDismissed', Date.now().toString())
-  }
+  // const dismissAdWarning = () => {
+  //   setShowAdWarning(false)
+  //   localStorage.setItem('adWarningDismissed', Date.now().toString())
+  // }
 
   // Effect to set initial server preference
   useEffect(() => {
@@ -258,10 +258,9 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
   return (
     <div className="flex flex-col gap-2">
       {/* Ad Warning Popup */}
-      {showAdWarning && (
+      {/* {showAdWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="relative mx-4 max-w-md w-full bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-300">
-            {/* Close button */}
             <button
               onClick={dismissAdWarning}
               className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
@@ -269,25 +268,21 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
               <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
             </button>
 
-            {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                 <AlertTriangle className="h-8 w-8 text-amber-500" />
               </div>
             </div>
 
-            {/* Title */}
             <h3 className="text-lg font-bold text-center text-gray-900 dark:text-white mb-2">
               Thông báo về quảng cáo
             </h3>
 
-            {/* Message */}
             <p className="text-center text-gray-600 dark:text-gray-300 text-sm mb-4">
               Server phim hiện đang có <span className="font-semibold text-amber-600 dark:text-amber-400">nhiều quảng cáo</span> hiện web không thể chặn.
               Để xem phim ít quảng cáo hơn, mọi người hãy tải trình duyệt <span className="font-semibold text-green-600 dark:text-green-400">Cốc Cốc</span> nhé!
             </p>
 
-            {/* Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={dismissAdWarning}
@@ -304,9 +299,8 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
             </div>
           </div>
         </div>
-      )}
+      )} */}
       <div ref={playerRef} className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
-        {/* Video iframe */}
         {videoSource ? (
           <iframe
             src={videoSource}
@@ -328,7 +322,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
           </div>
         )}
 
-        {/* Copyright Notice */}
         {episode && episode.copyright && (
           <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
             {episode.copyright}
@@ -336,7 +329,6 @@ export function VideoPlayer({ anime, episode, combiningEpisodes }: VideoPlayerPr
         )}
       </div>
 
-      {/* Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
         {/* Server Selection */}
         <div className="flex gap-2">
