@@ -11,7 +11,7 @@
     "page:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
-    "@next/third-parties": "^15.3.5",
+    "@next/third-parties": "15.5.7",
     "@radix-ui/react-checkbox": "^1.3.1",
     "@radix-ui/react-collapsible": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
