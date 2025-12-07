@@ -76,15 +76,15 @@ export default function Header() {
                       className="flex items-center gap-1 text-sm font-medium hover:text-primary"
                     >
                       {item.name}
-                      <ChevronDown
+                        <ChevronDown
                         className={`w-4 h-4 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                      />
-                    </button>
+                        />
+                      </button>
                   ) : (
                     item.href === '#' ? (
                       <div className="text-sm font-medium">
                         {item.name}
-                      </div>
+                  </div>
                     ) : (
                       <MVLink
                         href={item.href}
@@ -210,16 +210,16 @@ export default function Header() {
               {NAVIGATION(childCategories).map((item: NavigationItem) => (
                 <div key={item.href} className="relative">
                   <div className="flex items-center justify-between px-4 py-2">
-                    <MVLink
-                      href={item.href}
+                  <MVLink
+                    href={item.href}
                       className={`flex-1 text-sm font-medium hover:text-primary ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'
-                        }`}
+                      }`}
                       onClick={() => {
                         setIsMobileMenuOpen(false);
                         setMobileDropdown(null);
                       }}
-                    >
-                      {item.name}
+                  >
+                    {item.name}
                     </MVLink>
                     {item.children && (
                       <button

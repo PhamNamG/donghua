@@ -70,22 +70,22 @@ export default function Footer() {
 
           {/* Social Links */}
           <div className="flex justify-center md:justify-start gap-4">
-            {Object.entries(socialLinks).map(([key, url]) => {
-              const Icon = socialIcons[key as keyof typeof socialIcons];
-              return (
-                <MVLink
-                  key={key}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {Object.entries(socialLinks).map(([key, url]) => {
+                const Icon = socialIcons[key as keyof typeof socialIcons];
+                return (
+                  <MVLink 
+                    key={key}
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
                   className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
-                >
+                  >
                   <Icon className="w-5 h-5" />
-                </MVLink>
-              );
-            })}
+                  </MVLink>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
         {/* Main Links */}
         <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-2 mb-6">
@@ -109,7 +109,7 @@ export default function Footer() {
             Âu Mỹ... đa dạng thể loại. Khám phá nền tảng phim trực tuyến hàng đầu 2024 chất lượng 4K!
           </p>
         </div>
-      </div>
+        </div>
     </footer>
   );
 } 
